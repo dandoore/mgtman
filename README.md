@@ -1,13 +1,13 @@
 # dskman
 Update of Andrew Collier's SimCoupe .DSK manipulator for SAM Coupé disk images
-	        ,
-	SAM Coupe .DSK image manipulator
+
+	SAM Coupé .DSK image manipulator
 	--------------------------------
-	                                         ,
-	2021 Hacky Command line remix by Dan Doore
+
+	2021 Hacky Command line remix by Dan Dooré
 	Original MAC OS version by Andrew Collier
 	Quick and dirty ANSI C port by Thomas Harte
-	Command line enhancements by Frode Tennebo for Z88DK
+	Command line enhancements by Frode Tennebø for Z88DK
 
 	Usage: dskman <-h | -d | -w | -r> <DSK-file> [samfile] [options]
 
