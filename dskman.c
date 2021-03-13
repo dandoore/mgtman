@@ -56,13 +56,6 @@ int main(int argc, char **argv)
 char	command;
 int t;
 
-/* Arguments debug
-	for (t=0; t<argc; t++)
-		{
-		printf("%s \n",argv[t]);
-		}
-*/
-
 	if ((image = malloc(819200)) == (unsigned char *) NULL)
 	{
 		printf("Not enough free memory to load .DSK file\n");
