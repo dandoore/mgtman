@@ -25,4 +25,8 @@ Update of Andrew Collier's SimCoupe .DSK manipulator for SAM Coupé disk images
 	Filenames to write should conform to Sam conventions (Max: 10 chars, etc.)
 	If the MGT-File does not exist it will be created when -w is used.
 	
-	Why is this called MGTman and not DSKman? - DSK files now relate to EDSK format files which are a flexible disk format, MGT files are a raw dump of the disk data but the term is still used interchangably.
+	Why is this called MGTman and not DSKman?
+	-----------------------------------------
+	DSK files now relate to EDSK format files which are a flexible disk format.
+	MGT files are a raw dump of the disk data but the term is still used interchangably
+	so most DSK files relating to the SAM Coupe are the raw dump (MGT) format.
