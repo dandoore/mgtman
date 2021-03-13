@@ -9,7 +9,7 @@ Update of Andrew Collier's SimCoupe .DSK manipulator for SAM Coupé disk images
 	Quick and dirty ANSI C port by Thomas Harte
 	Command line enhancements by Frode Tennebø for Z88DK
 
-	Usage: dskman <-h | -d | -w | -r> <MGT-file> [samfile] [options]
+	Usage: mgtman <-h | -d | -w | -r> <MGT-file> [samfile] [options]
 
 	  -h  This help
 	  -d  Directory listing of MGT-file
