@@ -1,16 +1,17 @@
-// DSK Manipulator 2.0.0
+// Sam Coupe MGT/DSK Manipulator 2.0.0
 //
-// SimCoupe .DSK Manipulator 1.0.0 MacOS by Andrew Collier
-// 		quick and dirty ANSI C port by Thomas Harte!!
-// 		Command line enhancement by Frode Tennebø
-// 		Hacky command line remix by Dan Dooré for z88dk
+// 		Hacky command line remix by Dan Dooré 
+//		1.0.0 MacOS by Andrew Collier
+// 		Quick and dirty ANSI C port by Thomas Harte!!
+// 		Command line enhancement by Frode Tennebø for z88dk
+
 
 // 2.0.0 - Initial Build
 //			Made command line only
 //			Added access to read and directory functions
 //			Refactor directory listing to deal with all file types, start addresses, execute addresses
 //			Fixed bug in calculation of execute address in read function with offset
-//			Added check for duplicate filenames before writing to DSK
+//			Added check for duplicate filenames before writing to MGT
 //			Added abilty to make CODE files auto starting
 
 #include <stdio.h>
@@ -58,7 +59,7 @@ int t;
 
 	if ((image = malloc(819200)) == (unsigned char *) NULL)
 	{
-		printf("Not enough free memory to load .DSK file\n");
+		printf("Not enough free memory to load .MGT file\n");
 	    exit(1);
 	}
 	else
@@ -114,22 +115,32 @@ int t;
 
 void Usage(void)
 {
-	printf ("** Andrew Collier's SimCoupe .DSK manipulator    **\n");
-	printf ("**   Quick and dirty ANSI C port by Thomas Harte **\n");
-	printf ("**   Command line enhancements by Frode Tennebo  **\n");
-	printf ("**   Hacky Command line remix by Dan Doore       **\n");
-	printf ("\nUsage: dskman <-h | -d | -w | -r> <DSK-file> [samfile] [options]\n\n");
+	printf ("        ,\n");
+	printf ("SAM Coupe .MGT/DSK image manipulator\n");
+	printf ("------------------------------------\n");
+	printf ("                                         ,\n");
+	printf ("2021 Hacky Command line remix by Dan Doore\n");
+	printf ("Original MAC OS version by Andrew Collier\n");
+	printf ("Quick and dirty ANSI C port by Thomas Harte\n");
+	printf ("Command line enhancements by Frode Tennebo for Z88DK\n");
+
+	printf ("\nUsage: mgtman <-h | -d | -w | -r> <MGT-file> [samfile] [options]\n\n");
 	printf ("  -h  This help\n");
-	printf ("  -d  Directory listing of DSK-file\n");
-	printf ("  -r  Read samfile from DSK-file\n");
-	printf ("  -w  Write CODE samfile to DSK-file, add [options] if required\n");
+	printf ("  -d  Directory listing of MGT-file\n");
+	printf ("  -r  Read samfile from MGT-file\n");
+	printf ("  -w  Write CODE samfile to MGT-file, add [options] if required\n");
 	printf ("\nOptions:\n\n   x  Make CODE file executable at 32768\n\n");
-	printf ("Example: dskman -w test.dsk samfile x\n\n");
+	printf ("Example: dskman -w test.mgt samfile x\n\n");
 	printf ("Filenames to write should conform to Sam conventions (Max: 10 chars, etc.)\n");
-	printf ("If the DSK-File does not exist it will be created when -w is used.\n");
+	printf ("If the MGT-File does not exist it will be created when -w is used.\n\n");
+	printf ("Why is this called MGTman and not DSKman?\n");
+	printf ("-----------------------------------------\n");
+	printf ("DSK files now relate to EDSK format files which are a flexible disk format.\n");
+	printf ("MGT files are a raw dump of the disk data but the term is still used interchangably\n");
+	printf ("so most DSK files relating to the SAM Coupe are the raw dump (MGT) format.\n");
 }
 
-// Open DSK file and copy contents to RAM in 'image'
+// Open MGT file and copy contents to RAM in 'image'
 
 void OpenDsk(char *dskimage)
 {
@@ -152,14 +163,14 @@ int i;
 			}
 			else
 			{
-				printf ("Read fault on .DSK file: %s\n",dskimage);
+				printf ("Read fault on .MGT file: %s\n",dskimage);
 				exit(1);
 				
 			};
 		}
 		else
 		{
-			printf ("%s is not a valid .DSK file\n",dskimage);
+			printf ("%s is not a valid .MGT file\n",dskimage);
 			exit(1);
 		};
 		fclose (dsk);
@@ -167,13 +178,13 @@ int i;
 	}
 	else
 	{
-	//	printf ("Cannot open .DSK file: %s, will create if needed\n",dskimage);
+	//	printf ("Cannot open .MGT file: %s, will create if needed\n",dskimage);
 		validdsk = 0;
 	};
 
 }
 
-// Write out RAM 'image' as DSK file
+// Write out RAM 'image' as MGT file
 
 void SaveDsk(char *dskimage)
 {
@@ -182,14 +193,14 @@ void SaveDsk(char *dskimage)
 	{
 		if (fwrite (image, (size_t) 1, (size_t) 819200, dsk) != 819200)
 		{
-			printf ("Save fault on .DSK file: %s\n",dskimage);
+			printf ("Save fault on .MGT file: %s\n",dskimage);
 			exit(1);
 		}
 		fclose(dsk);
 	}
 	else
 		{
-			printf ("Could not open DSK file %s for saving\n",dskimage);
+			printf ("Could not open MGT file %s for saving\n",dskimage);
 			exit(1);
 		};
 }
@@ -275,7 +286,7 @@ int filelength,maxdtrack,s,t,h,i,m,a,tt,ss;
 		
 		if (exists != NULL)
 		{
-			printf ("File %s already exists in DSK\n",filename);
+			printf ("File %s already exists in MGT\n",filename);
 			exit(1);
 		}
 			
@@ -547,7 +558,7 @@ unsigned char samfile[10];
 
 		if (validdsk == 0)
 		{
-			printf("DSK file not found");
+			printf("MGT file not found");
 			exit(1);
 		}	
 		
@@ -608,7 +619,7 @@ unsigned char samfile[10];
 
 		if (found == NULL)
 		{
-			printf ("\nFile %s not found in .DSK\n",filename);
+			printf ("\nFile %s not found in .MGT\n",filename);
 			exit(1);
 		}
 		else
@@ -696,7 +707,7 @@ char filename[11];
 
 		if (validdsk == 0)
 		{
-			printf("DSK file not found");
+			printf("MGT file not found");
 			exit(1);
 		}	
 		
@@ -753,7 +764,7 @@ char filename[11];
 							if ((stat & 63)==1) printf(" %s","ZX BASIC   ");
 							if ((stat & 63)==2) printf(" %s","ZX D.ARRAY ");
 							if ((stat & 63)==3) printf(" %s","ZX $.ARRAY ");
-							if ((stat & 63)==4) printf(" %s","ZX         ");
+							if ((stat & 63)==4) printf(" %s","ZX CODE    ");
 							if ((stat & 63)==5) printf(" %s","ZX SNP 48k ");
 							if ((stat & 63)==6) printf(" %s","MD.FILE    ");
 							if ((stat & 63)==7) printf(" %s","ZX SCREEN$ ");
