@@ -30,3 +30,12 @@ Update of Andrew Collier's SimCoupe .DSK manipulator for SAM Coupé disk images
 	DSK files now relate to EDSK format files which are a flexible disk format.
 	MGT files are a raw dump of the disk data but the term is still used interchangably
 	so most DSK files relating to the SAM Coupe are the raw dump (MGT) format.
+
+
+**Resources for building**
+
+Windows batch file for compiling C with Z88DK, creating MGT file and executing in SimCoupe
+
+Copy of SAMDOS2 binary for inclusion into MGT images.
+
+helloworld.c for Sam Coupé
