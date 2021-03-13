@@ -697,7 +697,6 @@ unsigned char samfile[10];
 		}
 }
 
-
 // Output directory to screen
 
 void DirectoryDsk(void)
@@ -784,7 +783,7 @@ char filename[11];
 							flen += 16384* *Addr(track,sect,256*half +239);
 							
 							printf("%7.0f ",(float)flen);
-							
+														
 							// Code Start if code file
 							if ((stat & 63)==19)
 								{
@@ -833,6 +832,9 @@ char filename[11];
 								printf("\n");
 								};
 							}	
+
+							if (flen == 0) printf("\n");	// Allow PlusD/Disciple disks to be displayed, not that they are supported						
+							
 							nfsect -= *Addr(track,sect,256*half +12);
 							nfsect -= 256* *Addr(track,sect,256*half +11);
 							++nfiles;
