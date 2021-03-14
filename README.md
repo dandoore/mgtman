@@ -23,7 +23,7 @@ Update of Andrew Collier's SimCoupe .DSK manipulator for SAM Coupé disk images
 	Example: mgtman -w test.mgt samfile x
 
 	Filenames to write should conform to Sam conventions (Max: 10 chars, etc.)
-	If the mgt-File does not exist it will be created when -w is used.
+	If the mgt-file does not exist it will be created when -w is used.
 	
 	Why is this called MGTman and not DSKman?
 	-----------------------------------------
