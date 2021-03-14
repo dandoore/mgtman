@@ -5,7 +5,6 @@
 // 		Quick and dirty ANSI C port by Thomas Harte!!
 // 		Command line enhancement by Frode Tennebø for z88dk
 
-
 // 2.0.0 - Initial Build
 //			Made command line only
 //			Added access to read and directory functions
@@ -14,6 +13,16 @@
 //			Added check for duplicate filenames before writing to MGT
 //			Added abilty to make CODE files auto starting
 
+// Bugs
+//			Disc detection of samdos/masterdos always picks MasterDOS?
+
+// Possible Enhancements
+//			Have less hacky C code - C is not my thing, in fact programming these days isn't :) 
+//			Windows Z88DK build script in PowerShell
+//			Linux Z88DK Build script - in BASH? SH?
+//			Make writing of start and execution address based on user input instead of arbiatary 32768/32768
+//			Support PlusD/Disciple/UNI-DOS images
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -21,34 +30,17 @@
 
 // Prototypes
 
-void	SaveDsk(char *dskimage);
-void	OpenDsk(char *dskimage);
+void	Savemgt(char *mgtimage);
+void	Openmgt(char *mgtimage);
 void	SaveFile(char *fname, char exec);
 void	LoadFile(char *filename);
-void	DirectoryDsk(void);
+void	Directorymgt(void);
 void 	Usage(void);
 
 // Global vairables
 
-FILE	*dsk;
-FILE	*file;
-int 	validdsk;
-unsigned char	*image,*valid;
-unsigned char	*Addr(int track,int sector,int offset)
-{
-	unsigned char *a;
-
-	if (track < 80)
-	{
-		a = image + 10240*track + 512*(sector-1) + offset;
-	}
-	else
-	{
-		a = image + 5120 + 10240*(track - 128) + 512*(sector-1) + offset;
-	};
-
-	return a;
-}
+int 	validmgt;					// Status of MGT image in memory
+unsigned char	*image,*valid;		// MGT image in memory
 
 // Main entry point with arguments
 
@@ -81,13 +73,13 @@ int t;
 						}
 					if (argv[1][1] == 'd')
 						{
-						 OpenDsk(argv[2]);
-						 DirectoryDsk();
+						 Openmgt(argv[2]);
+						 Directorymgt();
 						 exit(0);
 						}
 					if (argv[1][1] == 'w')
 						{
-						 OpenDsk(argv[2]);
+						 Openmgt(argv[2]);
 						 if (argv[4] != NULL)
 							{
 							SaveFile(argv[3],argv[4][0]);
@@ -96,12 +88,12 @@ int t;
 							{
 							SaveFile(argv[3],'n');	
 							}
-						 SaveDsk(argv[2]);
+						 Savemgt(argv[2]);
 						 exit(0);
 						}
 					if (argv[1][1] == 'r')
 						{
-						 OpenDsk(argv[2]);
+						 Openmgt(argv[2]);
 						 LoadFile(argv[3]);
 						 exit(0);
 						}
@@ -119,20 +111,20 @@ void Usage(void)
 	printf ("SAM Coupe .MGT/DSK image manipulator\n");
 	printf ("------------------------------------\n");
 	printf ("                                         ,\n");
-	printf ("2021 Hacky Command line remix by Dan Doore\n");
+	printf ("2021 Hacky command line remix by Dan Doore\n");
 	printf ("Original MAC OS version by Andrew Collier\n");
 	printf ("Quick and dirty ANSI C port by Thomas Harte\n");
 	printf ("Command line enhancements by Frode Tennebo for Z88DK\n");
 
-	printf ("\nUsage: mgtman <-h | -d | -w | -r> <MGT-file> [samfile] [options]\n\n");
+	printf ("\nUsage: mgtman <-h | -d | -w | -r> <mgt-file> [samfile] [options]\n\n");
 	printf ("  -h  This help\n");
-	printf ("  -d  Directory listing of MGT-file\n");
-	printf ("  -r  Read samfile from MGT-file\n");
-	printf ("  -w  Write CODE samfile to MGT-file, add [options] if required\n");
+	printf ("  -d  Directory listing of mgt-file\n");
+	printf ("  -r  Read samfile from mgt-file\n");
+	printf ("  -w  Write CODE samfile to mgt-file, add [options] if required\n");
 	printf ("\nOptions:\n\n   x  Make CODE file executable at 32768\n\n");
-	printf ("Example: dskman -w test.mgt samfile x\n\n");
+	printf ("Example: mgtman -w test.mgt samfile x\n\n");
 	printf ("Filenames to write should conform to Sam conventions (Max: 10 chars, etc.)\n");
-	printf ("If the MGT-File does not exist it will be created when -w is used.\n\n");
+	printf ("If the mgt-File does not exist it will be created when -w is used.\n\n");
 	printf ("Why is this called MGTman and not DSKman?\n");
 	printf ("-----------------------------------------\n");
 	printf ("DSK files now relate to EDSK format files which are a flexible disk format.\n");
@@ -140,81 +132,99 @@ void Usage(void)
 	printf ("so most DSK files relating to the SAM Coupe are the raw dump (MGT) format.\n");
 }
 
-// Open MGT file and copy contents to RAM in 'image'
+// Open MGT file and copy contents to RAM in image
 
-void OpenDsk(char *dskimage)
+void Openmgt(char *mgtimage)
 {
 int i;
-	
-	dsk = fopen(dskimage, "rb");
+FILE	*mgt;
 
-	if (dsk != NULL)
+	mgt = fopen(mgtimage, "rb");
+
+	if (mgt != NULL)
 	{
 
-		fseek (dsk, 0, 2);
-		if (ftell (dsk) == 819200)
+		fseek (mgt, 0, 2);
+		if (ftell (mgt) == 819200)
 		{
-			fseek (dsk, 0 , 0);
-
-
-			if (fread (image, (size_t) 1, (size_t) 819200, dsk) == 819200)
+			fseek (mgt, 0 , 0);
+			if (fread (image, (size_t) 1, (size_t) 819200, mgt) == 819200)
 			{
-//				printf ("%s loaded OK\n",dskimage);
+				validmgt = 1;
 			}
 			else
 			{
-				printf ("Read fault on .MGT file: %s\n",dskimage);
+				printf ("Read fault on .MGT file: %s\n",mgtimage);
 				exit(1);
 				
 			};
 		}
 		else
 		{
-			printf ("%s is not a valid .MGT file\n",dskimage);
+			printf ("%s is not a valid .MGT file\n",mgtimage);
 			exit(1);
 		};
-		fclose (dsk);
-		validdsk = 1;
+		fclose (mgt);
 	}
 	else
 	{
-	//	printf ("Cannot open .MGT file: %s, will create if needed\n",dskimage);
-		validdsk = 0;
+		validmgt = 0;
 	};
 
 }
 
-// Write out RAM 'image' as MGT file
+// Write out RAM image as MGT file
 
-void SaveDsk(char *dskimage)
+void Savemgt(char *mgtimage)
 {
-	dsk = fopen(dskimage, "wb");
-	if (dsk != NULL)
+FILE	*mgt;
+
+	mgt = fopen(mgtimage, "wb");
+	if (mgt != NULL)
 	{
-		if (fwrite (image, (size_t) 1, (size_t) 819200, dsk) != 819200)
+		if (fwrite (image, (size_t) 1, (size_t) 819200, mgt) != 819200)
 		{
-			printf ("Save fault on .MGT file: %s\n",dskimage);
+			printf ("Save fault on .MGT file: %s\n",mgtimage);
 			exit(1);
 		}
-		fclose(dsk);
+		fclose(mgt);
 	}
 	else
 		{
-			printf ("Could not open MGT file %s for saving\n",dskimage);
+			printf ("Could not open MGT file %s for saving\n",mgtimage);
 			exit(1);
 		};
 }
 
-// Add file to RAM 'image'
+// Read data from RAM image based on track/sector/offset
+
+unsigned char *Addr(int track,int sector,int offset)
+{
+	unsigned char *a;
+
+	if (track < 80)
+	{
+		a = image + 10240*track + 512*(sector-1) + offset;
+	}
+	else
+	{
+		a = image + 5120 + 10240*(track - 128) + 512*(sector-1) + offset;
+	};
+
+	return a;
+}
+
+// Add file to RAM image
 
 void SaveFile(char *filename, char exec)
 {
 unsigned char sectmap[195],usedmap[195],*found,*exists,samfile[10];
 int filelength,maxdtrack,s,t,h,i,m,a,tt,ss;
+FILE	*file;
 		
 		// If  a new disk, create.
 		
-		if (validdsk == 0)
+		if (validmgt == 0)
 		{		
 		for (i = 0; i<819200; i++)
 			{
@@ -380,7 +390,7 @@ int filelength,maxdtrack,s,t,h,i,m,a,tt,ss;
 
 		if (filelength > (510*i - 9))
 		{
-			printf("Sorry, Not enough space on dsk\n");
+			printf("Sorry, Not enough space on disk\n");
 			exit(1);
 		}
 		else
@@ -450,7 +460,7 @@ int filelength,maxdtrack,s,t,h,i,m,a,tt,ss;
 			*(found+241) = (filelength%16384)/256;
 			*Addr(t,s,2) = (filelength%16384)/256;
 
-			// if Exec option is set to 'x' make it so with 32768
+			// If exec option is set to 'x' make it so with 32768
 	
 			if (exec == 'x')
 				{
@@ -537,8 +547,6 @@ int filelength,maxdtrack,s,t,h,i,m,a,tt,ss;
 				*(found+15+i) = usedmap[i];
 
 			};
-
-//		printf("File %s added OK\n", filename);
 		};
 }
 			else
@@ -548,15 +556,16 @@ int filelength,maxdtrack,s,t,h,i,m,a,tt,ss;
 			};
 }
 
-// Read file from RAM 'image'
+// Read file from RAM image
 
 void LoadFile(char *filename)
 {
 int i,t,s,h,length,maxdtrack,ss,tt;
 unsigned char *found;
 unsigned char samfile[10];
+FILE	*file;
 
-		if (validdsk == 0)
+		if (validmgt == 0)
 		{
 			printf("MGT file not found");
 			exit(1);
@@ -631,7 +640,6 @@ unsigned char samfile[10];
 			
 			if (file != NULL)
 			{
-
 				length = *(found +240);
 				length += 256* *(found +241);
 				length += 16384* *(found +239);
@@ -660,7 +668,7 @@ unsigned char samfile[10];
 					t = tt;
 					s = ss;
 
-//					printf("t %d  s %d\t",t,s);
+//					printf("t %d  s %d\t",t,s);  // Debug output
 
 					if (i>=510)
 					{
@@ -699,12 +707,12 @@ unsigned char samfile[10];
 
 // Output directory to screen
 
-void DirectoryDsk(void)
+void Directorymgt(void)
 {
 int maxdtrack,nfiles,nfsect,flen,type,exec,startpage,startoffset,start,i,stat,track,sect,half;
 char filename[11];
 
-		if (validdsk == 0)
+		if (validmgt == 0)
 		{
 			printf("MGT file not found");
 			exit(1);
@@ -712,7 +720,7 @@ char filename[11];
 		
 		if ( *(image+255) == 255)
 		{
-		printf ("             *** SAMDOS directory ***            \n\n");
+			printf ("             *** SAMDOS directory ***            \n\n");
 			maxdtrack = 4;
 		}
 		else
@@ -789,7 +797,7 @@ char filename[11];
 								{
 								start = 16384 *((*Addr(track, sect, 256*half +236) & 31)-1);
 								start += *Addr(track,sect,256*half +237);
-								start+= 256* *Addr(track, sect, 256*half +238);
+								start += 256* *Addr(track, sect, 256*half +238);
 							
 								printf("%7.0f ",(float)start);
 								}
@@ -801,11 +809,10 @@ char filename[11];
 							// Starting line if BASIC file	
 							if ((stat & 63)==16) 
 							{
-							exec =  16384* ((*Addr(track, sect, 256*half +242) & 31));
-							exec += *Addr(track,sect,256*half +243);
-							exec += 256* *Addr(track, sect, 256*half +244);
+								exec = *Addr(track,sect,256*half +243);
+								exec += 256* *Addr(track, sect, 256*half +244);
 						    												
-							if (exec != 573439)	// No exec addresss
+							if (exec <= 65535)	// Valid start addresss
 								{
 								printf("%7.0f\n",(float)exec);
 								}
@@ -818,10 +825,10 @@ char filename[11];
 							// Starting address if CODE file
 							if ((stat & 63)==19) 
 							{
-							exec = 16384* ((*Addr(track, sect, 256*half +242) & 31));
-							exec += *Addr(track,sect,256*half +243);
-							exec += 256* *Addr(track, sect, 256*half +244);
-						    exec -= 32768; // take away offset
+								exec = 16384* ((*Addr(track, sect, 256*half +242) & 31));
+								exec += *Addr(track,sect,256*half +243);
+								exec += 256* *Addr(track, sect, 256*half +244);
+								exec -= 32768; // take away offset
 																				
 							if (exec != 540671)	// No exec addresss
 								{
@@ -849,8 +856,7 @@ char filename[11];
 				};
 			};
 		};
-
-		printf("\n%d files, %d K free\n",nfiles,nfsect/2);
+		printf("\n%d files, %d Kb free\n",nfiles,nfsect/2);
 }
 
 
