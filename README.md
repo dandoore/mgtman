@@ -34,6 +34,7 @@ Update of Andrew Collier's SimCoupe .DSK manipulator for SAM Coupé disk images
 	so most DSK files relating to the SAM Coupé are the raw dump (MGT) format.
 
 **Resources for building**
+
 Contained in /resources/ to allow for comiling in Z88DK, creating MGT file and executing in [SimCoupé](https://github.com/simonowen/simcoupe)
 * Windows batch file for compiling and executing in SimCoupé
 * Copy of SAMDOS2 binary for inclusion into MGT images
