@@ -42,10 +42,6 @@ Files contained in /resources/ are to allow for compiling in Z88DK, creating an 
 * Copy of SAMDOS2 binary for inclusion into MGT images
 * helloworld.c for Sam Coupé for testing
 
-**Known Bugs**
-
-* Disc detection of Samdos/Masterdos always picks MasterDOS -  roll into disk type detection routine
-
 **Planned enhancements**
 
 * Make writing of start and execution address based on user input instead of arbiatary 32768/32768
