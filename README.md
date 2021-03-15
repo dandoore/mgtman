@@ -41,12 +41,3 @@ Files contained in /resources/ are to allow for compiling in Z88DK, creating an 
 * Windows batch file for compiling and executing in SimCoupé
 * Copy of SAMDOS2 binary for inclusion into MGT images
 * helloworld.c for Sam Coupé for testing
-
-**Planned enhancements**
-
-* Make writing of start and execution address based on user input instead of arbiatary 32768/32768
-* Disk type detection routine
-* Support PlusD/Disciple/UNI-DOS images
-* Have less hacky C code - C is not my thing, in fact programming these days isn't :) 
-* Windows Z88DK build script in PowerShell
-* Linux Z88DK Build script - in BASH? SH?
