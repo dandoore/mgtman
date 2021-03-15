@@ -1,6 +1,8 @@
 # mgtman
 Update of Andrew Collier's SimCoupe .DSK manipulator for SAM Coupé disk images
 
+Please only use released binaries, other binaries should be considered alpha and subject to change.
+
 **Usage**
 
 	SAM Coupé .MGT/DSK image manipulator
@@ -40,9 +42,14 @@ Contained in /resources/ to allow for comiling in Z88DK, creating MGT file and e
 * Copy of SAMDOS2 binary for inclusion into MGT images
 * helloworld.c for Sam Coupé for testing
 
+**Known Bugs**
+
+* Disc detection of Samdos/Masterdos always picks MasterDOS -  roll into disk type detection routine
+
 **Planned enhancements**
 
 * Make writing of start and execution address based on user input instead of arbiatary 32768/32768
+* Disk type detection routine
 * Support PlusD/Disciple/UNI-DOS images
 * Have less hacky C code - C is not my thing, in fact programming these days isn't :) 
 * Windows Z88DK build script in PowerShell
