@@ -32,7 +32,7 @@ mgtman -w %FILE%.mgt %OUTPUT% x
 IF NOT %ERRORLEVEL% == 0  GOTO FAIL
 
 echo Removing binary %OUTPUT%...
-del auto.bin 1> nul 2> nul
+del %OUTPUT% 1> nul 2> nul
 IF NOT %ERRORLEVEL% == 0  GOTO FAIL
 
 echo Launching %FILE%.mgt with SimCoupe...
