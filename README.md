@@ -15,7 +15,7 @@ Please only use released binaries, other binaries should be considered alpha and
 	
 	https://github.com/dandoore/mgtman/
 	
-	Usage: mgtman_win32 [-h] [-d <mgt-file>] [-w | -r <mgt-file> <samfile> [start-address] [execute-address]]
+	Usage: mgtman [-h] [-d <mgt-file>] [-w | -r <mgt-file> <samfile> [start-address] [execute-address]]
 	
 	  -h  This help
 	  -d  Directory listing of mgt-file
@@ -31,9 +31,9 @@ Please only use released binaries, other binaries should be considered alpha and
 	
 	Examples:
 	
-  	 Directory of disk image:    mgtman_win32 -d test.mgt
-  	 Write auto-executing file:  mgtman_win32 -w test.mgt auto.cde 32768 32768
-  	 Read file from disk image:  mgtman_win32 -r test.mgt file.c
+  	 Directory of disk image:    mgtman -d test.mgt
+  	 Write auto-executing file:  mgtman -w test.mgt auto.cde 32768 32768
+  	 Read file from disk image:  mgtman -r test.mgt file.c
 	
 	Filenames for samfile must conform to Sam conventions (Max: 10 chars, etc.)
 	
