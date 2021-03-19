@@ -1,8 +1,6 @@
 # mgtman
 Update of Andrew Collier's SimCoupe .DSK manipulator for SAM Coupé disk images
 
-Please only use released binaries, other binaries should be considered alpha and subject to change.
-
 **Help**
         
 	SAM Coupé .MGT/DSK image manipulator v2.1.0
