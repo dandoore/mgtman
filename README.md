@@ -4,36 +4,45 @@ Update of Andrew Collier's SimCoupe .DSK manipulator for SAM Coupé disk images
 Please only use released binaries, other binaries should be considered alpha and subject to change.
 
 **Help**
-
+        
 	SAM Coupé .MGT/DSK image manipulator
 	------------------------------------
-
-	2021 Hacky Command line remix by Dan Dooré
+	
+	2021 Hacky command line remix by Dan Dooré
 	Original MAC OS version by Andrew Collier
 	Quick and dirty ANSI C port by Thomas Harte
-	Command line enhancements by Frode Tennebø for Z88DK
-
-	Usage: mgtman <-h | -d | -w | -r> <mgt-file> [samfile] [options]
-
+	Command line enhancements by Frode Tennebo for Z88DK
+	
+	https://github.com/dandoore/mgtman/
+	
+	Usage: mgtman_win32 [-h] [-d <mgt-file>] [-w | -r <mgt-file> <samfile> [start-address] [execute-address]]
+	
 	  -h  This help
 	  -d  Directory listing of mgt-file
 	  -r  Read samfile from mgt-file
-	  -w  Write CODE samfile to mgt-file, add [options] if required
-
+	  -w  Write CODE samfile to mgt-file (create MGT file if not existing)
+	
 	Options:
-
- 	  x   Make CODE file executable at 32768
-
-	Example: mgtman -w test.mgt samfile x
-
-	Filenames to write should conform to Sam conventions (Max: 10 chars, etc.)
-	If the mgt-file does not exist it will be created when -w is used.
+	
+	   mgt-file         MGT image disk file (can be blank when using -w)
+	   samfile          Code filename on mgt-file or file system)
+ 	  start-address    When writing to mgt-file code load start address (default 32768, >=16384)
+  	 execute-address  When writing to mgt-file code execute address (default none, >=16384))
+	
+	Examples:
+	
+  	 Directory of disk image:   mgtman_win32 -d test.mgt
+  	 Write auto-executing file:  mgtman_win32 -w test.mgt auto.cde 32768 32768
+  	 Read file from disk image: mgtman_win32 -r test.mgt file.c
+	
+	Filenames for samfile must conform to Sam conventions (Max: 10 chars, etc.)
 	
 	Why is this called MGTman and not DSKman?
 	-----------------------------------------
 	DSK files now relate to EDSK format files which are a flexible disk format.
-	MGT files are a raw dump of the disk data but the term is still used interchangably
-	so most DSK files relating to the SAM Coupé are the raw dump (MGT) format.
+	MGT files are an 819,200Kb dump (RAW/IMG) of the disk data but the term is still used
+	interchangably so most DSK files relating to the SAM Coupe are the 819,200Kb (MGT)
+	format. Genuine (E)DSK files have an EDSK header and flexible file size.
 
 **Resources for building**
 
