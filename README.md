@@ -5,9 +5,8 @@ Please only use released binaries, other binaries should be considered alpha and
 
 **Help**
         
-	SAM Coupé .MGT/DSK image manipulator
-	------------------------------------
-	
+	SAM Coupé .MGT/DSK image manipulator v2.1.0
+	-------------------------------------------
 	2021 Hacky command line remix by Dan Dooré
 	Original MAC OS version by Andrew Collier
 	Quick and dirty ANSI C port by Thomas Harte
@@ -15,28 +14,29 @@ Please only use released binaries, other binaries should be considered alpha and
 	
 	https://github.com/dandoore/mgtman/
 	
-	Usage: mgtman [-h] [-d <mgt-file>] [-w | -r <mgt-file> <samfile> [start-address] [execute-address]]
+	Usage: mgtman_win32 [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-w | -r <mgt-file> <samfile> [start-address] [execute-address]]
 	
 	  -h  This help
 	  -d  Directory listing of mgt-file
+	  -t  Title (change disk name) mgt-file with title-name where supported by the disk format
 	  -r  Read samfile from mgt-file
 	  -w  Write CODE samfile to mgt-file (create MGT file if not existing)
 	
-	Options:
+	Variables:
 	
 	   mgt-file         MGT image disk file (can be new file when using -w)
-	   samfile          Code filename on mgt-file or file system)
- 	   start-address    When writing to mgt-file code load start address (default 32768, >=16384)
-  	   execute-address  When writing to mgt-file code execute address (default none, >=16384))
-	
+	   title-name       Disk title to write to mgt-file (Max 10 chars, 7-bit ASCII)
+	   samfile          Code filename on mgt-file or file system (Max 10 chars, 7-bit ASCII)
+	   start-address    When writing to mgt-file code load start address (default 32768, >=16384)
+	   execute-address  When writing to mgt-file code execute address (default none, >=16384))
+
 	Examples:
-	
-  	 Directory of disk image:    mgtman -d test.mgt
-  	 Write auto-executing file:  mgtman -w test.mgt auto.cde 32768 32768
-  	 Read file from disk image:  mgtman -r test.mgt file.c
-	
-	Filenames for samfile must conform to Sam conventions (Max: 10 chars, etc.)
-	
+
+	   Directory of disk image:    mgtman_win32 -d test.mgt
+	   Write auto-executing file:  mgtman_win32 -w test.mgt auto.cde 32768 32768
+	   Read file from disk image:  mgtman_win32 -r test.mgt file.c
+	   Change title of disk image: mgtman_win32 -t test.mgt mydisk
+
 	Why is this called MGTman and not DSKman?
 	-----------------------------------------
 	DSK files now relate to EDSK format files which are a flexible disk format.
