@@ -26,14 +26,14 @@ Please only use released binaries, other binaries should be considered alpha and
 	
 	   mgt-file         MGT image disk file (can be blank when using -w)
 	   samfile          Code filename on mgt-file or file system)
- 	  start-address    When writing to mgt-file code load start address (default 32768, >=16384)
-  	 execute-address  When writing to mgt-file code execute address (default none, >=16384))
+ 	   start-address    When writing to mgt-file code load start address (default 32768, >=16384)
+  	   execute-address  When writing to mgt-file code execute address (default none, >=16384))
 	
 	Examples:
 	
-  	 Directory of disk image:   mgtman_win32 -d test.mgt
+  	 Directory of disk image:    mgtman_win32 -d test.mgt
   	 Write auto-executing file:  mgtman_win32 -w test.mgt auto.cde 32768 32768
-  	 Read file from disk image: mgtman_win32 -r test.mgt file.c
+  	 Read file from disk image:  mgtman_win32 -r test.mgt file.c
 	
 	Filenames for samfile must conform to Sam conventions (Max: 10 chars, etc.)
 	
