@@ -1,4 +1,4 @@
-// Sam Coupe MGT/DSK Manipulator 2.0.0
+// Sam Coupe MGT/DSK Manipulator 2.1.0
 //
 // 		Hacky command line remix by Dan Dooré 
 //		1.0.0 MacOS by Andrew Collier
@@ -20,13 +20,14 @@ void DetectFormat();
 unsigned char *Addr(int track,int sector,int offset);
 void SaveFile(char *fname, int start, int exec);
 void LoadFile(char *filename);
+void TitleDisk(char *diskname);
 void Directorymgt(void);
 void Usage(char *exename);
 void Help(char *exename);
 
 // Global vairables
 
-int 	validmgt,format;			// Status and format of MGT image in memory
+int validmgt,format;				// Status and format of MGT image in memory
 unsigned char	*image,*valid;		// MGT image in memory
 
 // Main entry point with arguments
@@ -117,6 +118,13 @@ int t;
 						 LoadFile(argv[3]);
 						 exit(0);
 						}
+					if (argv[1][1] == 't')
+						{
+						 Openmgt(argv[2]);
+						 TitleDisk(argv[3]);
+						 Savemgt(argv[2]);
+						 exit(0);
+						}
 					else	// Fallback for invalid argument
 						{
 						Usage(argv[0]);
@@ -132,7 +140,7 @@ int t;
 
 void Usage(char *exename)
 {
-	printf("\nUsage: %s [-h] [-d <mgt-file>] [-w | -r <mgt-file> <samfile> [start-address] [execute-address]]\n\n",exename);
+	printf("\nUsage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-w | -r <mgt-file> <samfile> [start-address] [execute-address]]\n\n",exename);
 	printf("For help page: %s -h  \n",exename);
 }
 
@@ -141,27 +149,29 @@ void Usage(char *exename)
 void Help(char *exename)
 {
 	printf("        ,\n");
-	printf("SAM Coupe .MGT/DSK image manipulator\n");
-	printf("------------------------------------\n");
+	printf("SAM Coupe .MGT/DSK image manipulator v2.1.0\n");
+	printf("-------------------------------------------\n");
 	printf("                                         ,\n");
 	printf("2021 Hacky command line remix by Dan Doore\n");
 	printf("Original MAC OS version by Andrew Collier\n");
 	printf("Quick and dirty ANSI C port by Thomas Harte\n");
 	printf("Command line enhancements by Frode Tennebo for Z88DK\n\n");
 	printf("https://github.com/dandoore/mgtman/\n\n");
-	printf("Usage: %s [-h] [-d <mgt-file>] [-w | -r <mgt-file> <samfile> [start-address] [execute-address]]\n\n",exename);
+	printf("Usage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-w | -r <mgt-file> <samfile> [start-address] [execute-address]]\n\n",exename);
 	printf("  -h  This help\n");
 	printf("  -d  Directory listing of mgt-file\n");
+	printf("  -t  Title (change disk name) mgt-file with title-name where supported by the disk format\n");
 	printf("  -r  Read samfile from mgt-file\n");
 	printf("  -w  Write CODE samfile to mgt-file (create MGT file if not existing)\n");
-	printf("\nOptions:\n\n   mgt-file         MGT image disk file (can be blank when using -w)\n");
-	printf("   samfile          Code filename on mgt-file or file system)\n");
+	printf("\nVariables:\n\n   mgt-file         MGT image disk file (can be new file when using -w)\n");
+	printf("   title-name       Disk title to write to mgt-file (Max 10 chars, 7-bit ASCII)\n");
+	printf("   samfile          Code filename on mgt-file or file system (Max 10 chars, 7-bit ASCII)\n");
     printf("   start-address    When writing to mgt-file code load start address (default 32768, >=16384)\n");
 	printf("   execute-address  When writing to mgt-file code execute address (default none, >=16384))\n\n");
-	printf("Examples:\n\n   Directory of disk image:   %s -d test.mgt\n",exename);
+	printf("Examples:\n\n   Directory of disk image:    %s -d test.mgt\n",exename);
 	printf("   Write auto-executing file:  %s -w test.mgt auto.cde 32768 32768\n",exename);
-	printf("   Read file from disk image: %s -r test.mgt file.c\n\n",exename);
-	printf("Filenames for samfile must conform to Sam conventions (Max: 10 chars, etc.)\n\n");
+	printf("   Read file from disk image:  %s -r test.mgt file.c\n",exename);
+    printf("   Change title of disk image: %s -t test.mgt mydisk\n\n",exename);
 	printf("Why is this called MGTman and not DSKman?\n");
 	printf("-----------------------------------------\n");
 	printf("DSK files now relate to EDSK format files which are a flexible disk format.\n");
@@ -188,6 +198,7 @@ FILE	*mgt;
 			if (fread (image, (size_t) 1, (size_t) 819200, mgt) == 819200)
 			{
 				validmgt = 1;
+				DetectFormat();
 			}
 			else
 			{
@@ -206,27 +217,46 @@ FILE	*mgt;
 	{
 		validmgt = 0;
 	};
-
 }
 
 // Detect format of the RAM Image
 
 void DetectFormat()
 {
+int	i;
+unsigned char	*found;
 
-	// As well as writing blank sectors to the disk, MasterDOS writes some
-	// information about the disk into the first sector/first directory entry. 
-	
-	// 210	(10 bytes) In all entries except the first one on the disk, these bytes hold
-	// 		Plus D/Disciple-form information. In the first entry, the disk name is stored here.
-	//		Bit 7 of byte 210 can be set or reset without altering the disk name.
-	//252-253	(2 bytes) In the first directory entry only, Random word identifying the disk.
+		if (validmgt == 0)
+		{
+			printf("MGT file not found");
+			exit(1);
+		}	
 		
-	// Format 0 = SamDOS, 1 = MasterDOS, 2 = BDOS, 3=GDOS(DISCiPLE), 4=G+DOS(PlusD), 5=Uni-DOS
+		// Detect Format from first directory entry
+		//
+	    // Format 0 = SamDOS, 1 = MasterDOS, 2 = BDOS, 3=GDOS(DISCiPLE)/G+DOS(PlusD), 4=Uni-DOS
 
-	// This is TODO - force to SamDOS for the moment
-	
-	format = 0;	
+		found = Addr(0,1,0);	// First sector, first directory entry
+		
+		format = 0;
+		if ( *(found+255) == 255) format = 0;												// SamDOS format 
+		if ( *(found+252) != 0 && *(found+253) != 0 && *(found+252) != 32) format = 1;		// MasterDOS format 
+		if ( *(found+255) == 32) format = 2;												// BDOS format 
+
+		if ( (*(found) & 63) >= 1 &&  (*(found) & 63) <= 13)	// If first file entry is a ZX File type
+			{
+			format=3;		// GDOS(DISCiPLE)/G+DOS(PlusD)
+			if (*(found+244) != 0) format = 4;	//Uni-DOS marker
+			}
+			
+		/* Debug - print first entry values
+		
+		for (i=0; i<=255; i++)
+			{
+			if (i<15 || i>209) printf("%u: %u %c\n",i,*(found+i),*(found+i));
+			}
+		printf("\nFormat: %u\n",format);
+			//*/
 }
 
 // Write out RAM image as MGT file
@@ -278,15 +308,22 @@ unsigned char 	sectmap[195],usedmap[195],*found,*exists,samfile[10];
 int	filelength,maxdtrack,s,t,h,i,m,a,tt,ss;  
 FILE	*file;
 		
-		// If no existing disk file existed, create blank image.
+		// If no existing disk file existed, create blank SAMDOS image.
 		
 		if (validmgt == 0)
-		{		
-		for (i = 0; i<819200; i++)
-			{
-			*(image+i) = (unsigned char)0;
-			}
+			{		
+			for (i = 0; i<819200; i++)
+				{
+				*(image+i) = (unsigned char)0;
+				}
+			format=0;
 		}
+		
+		if (format >= 4)
+			{
+			printf("Sorry, file operations only supported on SAM Coupe formats right now.\n");
+			exit(1);
+			}
 		
 		file = fopen(filename, "rb");
 		if (file != NULL)
@@ -581,8 +618,8 @@ FILE	*file;
 			254	Subdirectory code number of this file.
 			255	In first entry only, number of directory tracks, minus 4.
 			
-			7. FILE DESCRIPTOR FORMAT
-			=========================
+			GDOS/G+DOS
+			==========
 
 			Now we will see the details about a single directory entry.
 			NOTE: All numbers are in decimal.
@@ -835,6 +872,54 @@ FILE	*file;
 			};
 }
 
+// Title Disk (MasterDOS/BDOS/Uni-DOS)
+
+void TitleDisk(char *diskname)
+{
+int	i;
+unsigned char *found;
+
+		if (validmgt == 0)
+		{
+			printf("MGT file not found");
+			exit(1);
+		}	
+		
+		if (format ==0 || format == 3 )
+			{
+			printf("Sorry, disk rename only supported on MasterDOS/BDOS/Uni-DOS.\n");
+			exit(1);
+			}
+			
+		// Pad name to 10 chars	
+			i=0;
+			for (i=strlen(diskname); i<10; i++)
+			{
+				diskname[i]=' ';
+			};
+		    diskname[10]=0;	
+			
+		if (format ==1 || format ==2)	// MasterDOS and BDOS
+		{
+		found = Addr(0,1,0);	// First sector, first directory entry
+			
+		for (i=0; i<10; i++)
+			{
+				*(found+210+i) = diskname[i]; // 210 in first entry is Disk Name under Masterdos
+			};	
+		}
+		
+		if (format == 4)	// Uni-DOS
+		{
+		found = Addr(0,1,0);	// First sector, first directory entry
+			
+		for (i=0; i<10; i++)
+			{
+				*(found+246+i) = diskname[i]; // 246 in first entry is Disk Name under UNI-DOS
+			};	
+		}
+}
+
 // Read file from RAM image
 
 void LoadFile(char *filename)
@@ -849,6 +934,12 @@ FILE	*file;
 			printf("MGT file not found");
 			exit(1);
 		}	
+		
+		if (format >= 4)
+			{
+			printf("Sorry, file operations only supported on SAM Coupe formats right now.\n");
+			exit(1);
+			}
 		
 		// Make samefilename from filename to 10 chars with spaces
 	
@@ -987,34 +1078,64 @@ FILE	*file;
 
 void Directorymgt(void)
 {
-int	maxdtrack,nfiles,nfsect,flen,type,exec,startpage,startoffset,start,i,stat,track,sect,half;
-char	filename[11];
+int maxdtrack,nfiles,nfsect,flen,type,exec,startpage,startoffset,start,i,stat,track,sect,half;
+char	diskname[11], filename[11];
 
 		if (validmgt == 0)
 		{
 			printf("MGT file not found");
 			exit(1);
 		}	
-		
-		if ( *(image+255) == 255)	// MasterDOS additional directory tracks
-		{
-			printf("             *** SAMDOS directory ***            \n\n");
-			maxdtrack = 4;
-		}
-		else
-		{
-			maxdtrack = 4 + *(image+255); // MasterDOS additional directory tracks
 	
+		maxdtrack = 4;	// Default directory track size
+		
+		// Format 0 = SamDOS, 1 = MasterDOS, 2 = BDOS, 3=GDOS(DISCiPLE)/G+DOS(PlusD), 4=Uni-DOS
+		
+		if (format == 0) 
+			{
+			printf("             *** SAMDOS directory ***            \n\n");
+			}
+			
+		if (format == 1) 
+			{
+			maxdtrack = 4 + *(image+255); // MasterDOS additional directory tracks
+			
 			for (i=0; i<10; i++)
 			{
-				filename[i] = *(image+210+i); // 210 in first entry is Disk Name under Masterdos
+				diskname[i] = *(image+210+i); // 210 in first entry is Disk Name under Masterdos
 
 			};
-			filename[10]=0;
-			printf("        *** MasterDos directory: %s ***        \n\n",filename);
+			diskname[10]=0;
+			printf("        *** MasterDOS directory: %s ***        \n\n",diskname);
+			}
 			
-		};
+		if (format == 2) 
+			{
+			for (i=0; i<10; i++)
+			{
+				diskname[i] = *(image+210+i); // 210 in first entry is Disk Name under BDOS
 
+			};
+			diskname[10]=0;
+			printf("        *** BDOS directory: %s ***        \n\n",diskname);
+			}
+			
+		if (format == 3) 
+			{
+			printf("        *** G(+)DOS directory ***            \n\n");
+			}	
+
+		if (format == 4) 
+			{
+			for (i=0; i<10; i++)
+			{
+				diskname[i] = *(image+246+i); // 246 in first entry is Disk Name under Uni-DOS
+
+			};
+			diskname[10]=0;
+			printf("        *** UNI-DOS directory: %s ***        \n\n",diskname);
+			}
+			
 		printf("Filename   HP Type         Size   Address Execute\n");
 		printf("-------------------------------------------------\n");
 		
