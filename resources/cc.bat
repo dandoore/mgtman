@@ -1,5 +1,9 @@
 @echo off
 REM
+REM Note: This is mostly not needed due to sterling work over at Z88DK adding MGT Support
+REM https://github.com/z88dk/z88dk/commit/fa1f1b45901e4412f190353647667192b4c2e61b)
+REM but may still be useful
+REM
 REM Windows Batch file for launching ZCC to compile SAM Coupé executables and lauch them in SimCoupe via
 REM an MGT disk image.
 REM
