@@ -24,7 +24,7 @@ Please only use released binaries, other binaries should be considered alpha and
 	
 	Options:
 	
-	   mgt-file         MGT image disk file (can be blank when using -w)
+	   mgt-file         MGT image disk file (can be new file when using -w)
 	   samfile          Code filename on mgt-file or file system)
  	   start-address    When writing to mgt-file code load start address (default 32768, >=16384)
   	   execute-address  When writing to mgt-file code execute address (default none, >=16384))
