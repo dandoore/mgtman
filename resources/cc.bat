@@ -32,7 +32,7 @@ mgtman -w %FILE%.mgt %DOSFILE%
 IF NOT %ERRORLEVEL% == 0  GOTO FAIL
 
 echo Copying auto.bin to %FILE%.mgt...
-mgtman -w %FILE%.mgt %OUTPUT% x
+mgtman -w %FILE%.mgt %OUTPUT% 32768 32768
 IF NOT %ERRORLEVEL% == 0  GOTO FAIL
 
 echo Removing binary %OUTPUT%...
