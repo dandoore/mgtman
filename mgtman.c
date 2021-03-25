@@ -234,7 +234,7 @@ unsigned char	*found;
 		
 		// Detect Format from first directory entry
 		//
-	    // Format 0 = SamDOS, 1 = MasterDOS, 2 = BDOS, 3=GDOS(DISCiPLE)/G+DOS(PlusD), 4=Uni-DOS
+	    // Format 0 = SamDOS, 1 = MasterDOS, 2 = BDOS, 3=GDOS(DISCiPLE)/G+DOS(PlusD), 4=UNI-DOS
 
 		found = Addr(0,1,0);	// First sector, first directory entry
 		
@@ -246,7 +246,7 @@ unsigned char	*found;
 		if ( (*(found) & 63) >= 1 &&  (*(found) & 63) <= 13)	// If first file entry is a ZX File type
 			{
 			format=3;		// GDOS(DISCiPLE)/G+DOS(PlusD)
-			if (*(found+244) != 0) format = 4;	//Uni-DOS marker
+			if (*(found+244) != 0) format = 4;	//UNI-DOS marker
 			}
 			
 		/* Debug - print first entry values
@@ -872,7 +872,7 @@ FILE	*file;
 			};
 }
 
-// Title Disk (MasterDOS/BDOS/Uni-DOS)
+// Title Disk (MasterDOS/BDOS/UNI-DOS)
 
 void TitleDisk(char *diskname)
 {
@@ -887,7 +887,7 @@ unsigned char *found;
 		
 		if (format ==0 || format == 3 )
 			{
-			printf("Sorry, disk rename only supported on MasterDOS/BDOS/Uni-DOS.\n");
+			printf("Sorry, disk rename only supported on MasterDOS/BDOS/UNI-DOS.\n");
 			exit(1);
 			}
 			
@@ -909,7 +909,7 @@ unsigned char *found;
 			};	
 		}
 		
-		if (format == 4)	// Uni-DOS
+		if (format == 4)	// UNI-DOS
 		{
 		found = Addr(0,1,0);	// First sector, first directory entry
 			
@@ -1089,7 +1089,7 @@ char	diskname[11], filename[11];
 	
 		maxdtrack = 4;	// Default directory track size
 		
-		// Format 0 = SamDOS, 1 = MasterDOS, 2 = BDOS, 3=GDOS(DISCiPLE)/G+DOS(PlusD), 4=Uni-DOS
+		// Format 0 = SamDOS, 1 = MasterDOS, 2 = BDOS, 3=GDOS(DISCiPLE)/G+DOS(PlusD), 4=UNI-DOS
 		
 		if (format == 0) 
 			{
@@ -1129,7 +1129,7 @@ char	diskname[11], filename[11];
 			{
 			for (i=0; i<10; i++)
 			{
-				diskname[i] = *(image+246+i); // 246 in first entry is Disk Name under Uni-DOS
+				diskname[i] = *(image+246+i); // 246 in first entry is Disk Name under UNI-DOS
 
 			};
 			diskname[10]=0;
@@ -1179,15 +1179,16 @@ char	diskname[11], filename[11];
 							if ((stat & 63)==8) printf(" %s","SPECIAL    ");
 							if ((stat & 63)==9) printf(" %s","ZX SNP 128k");
 							if ((stat & 63)==10) printf(" %s","OPENTYPE   ");
-							if ((stat & 63)==11) printf(" %s","EXECUTE    "); // Only valid on DISCiPLE/+D as writes bytes to onboard 8K RAM
-							if ((stat & 63)==12) printf(" %s","DIR        "); // In MDOS and Uni-Dos, SAMDOS uses 'WHAT?' for this
-							if ((stat & 63)==13) printf(" %s","CREATE     "); // Uni-Dos only
+							if ((stat & 63)==11) printf(" %s","EXECUTE    "); // Only valid on DISCiPLE/+D hardware as writes bytes to onboard device 8K RAM
+							if ((stat & 63)==12) printf(" %s","DIR        "); // UNI-DOS only
+							if ((stat & 63)==13) printf(" %s","CREATE     "); // UNI-DOS only
 						    if ((stat & 63)==16) printf(" %s","BASIC      ");
 							if ((stat & 63)==17) printf(" %s","D.ARRAY    ");
 							if ((stat & 63)==18) printf(" %s","$.ARRAY    ");
 							if ((stat & 63)==19) printf(" %s","CODE       ");
 							if ((stat & 63)==20) printf(" %s","SCREEN$    ");
-							if ((stat & 63)==22) printf(" %s","DRIVER-APP "); // DRiVER App
+							if ((stat & 63)==21) printf(" %s","DIR        "); // In MasterDOS, SAMDOS uses 'WHAT?' for this
+							if ((stat & 63)==22) printf(" %s","DRIVER-APP "); 
 							if ((stat & 63)==23) printf(" %s","DRIVER-BOOT");
 							if ((stat & 63)==24) printf(" %s","EDOS NOMEN "); // Entropy EDOS (abandoned)
 							if ((stat & 63)==25) printf(" %s","EDOS SYSTEM");
