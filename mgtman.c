@@ -1093,7 +1093,7 @@ char	diskname[11], filename[11];
 		
 		if (format == 0) 
 			{
-			printf("             *** SAMDOS directory ***            \n\n");
+			printf("\n             *** SAMDOS directory ***            \n\n");
 			}
 			
 		if (format == 1) 
@@ -1106,7 +1106,7 @@ char	diskname[11], filename[11];
 
 			};
 			diskname[10]=0;
-			printf("        *** MasterDOS directory: %s ***        \n\n",diskname);
+			printf("\n        *** MasterDOS directory: %s ***        \n\n",diskname);
 			}
 			
 		if (format == 2) 
@@ -1117,12 +1117,12 @@ char	diskname[11], filename[11];
 
 			};
 			diskname[10]=0;
-			printf("        *** BDOS directory: %s ***        \n\n",diskname);
+			printf("\n        *** BDOS directory: %s ***        \n\n",diskname);
 			}
 			
 		if (format == 3) 
 			{
-			printf("        *** G(+)DOS directory ***            \n\n");
+			printf("\n        *** G(+)DOS directory ***            \n\n");
 			}	
 
 		if (format == 4) 
@@ -1133,7 +1133,7 @@ char	diskname[11], filename[11];
 
 			};
 			diskname[10]=0;
-			printf("        *** UNI-DOS directory: %s ***        \n\n",diskname);
+			printf("\n        *** UNI-DOS directory: %s ***        \n\n",diskname);
 			}
 			
 		printf("Filename   HP Type         Size   Address Execute\n");
@@ -1179,7 +1179,7 @@ char	diskname[11], filename[11];
 							if ((stat & 63)==8) printf(" %s","SPECIAL    ");
 							if ((stat & 63)==9) printf(" %s","ZX SNP 128k");
 							if ((stat & 63)==10) printf(" %s","OPENTYPE   ");
-							if ((stat & 63)==11) printf(" %s","EXECUTE    ");
+							if ((stat & 63)==11) printf(" %s","EXECUTE    "); // Only valid on DISCiPLE/+D as writes bytes to onboard 8K RAM
 							if ((stat & 63)==12) printf(" %s","DIR        "); // In MDOS and Uni-Dos, SAMDOS uses 'WHAT?' for this
 							if ((stat & 63)==13) printf(" %s","CREATE     "); // Uni-Dos only
 						    if ((stat & 63)==16) printf(" %s","BASIC      ");
@@ -1187,6 +1187,15 @@ char	diskname[11], filename[11];
 							if ((stat & 63)==18) printf(" %s","$.ARRAY    ");
 							if ((stat & 63)==19) printf(" %s","CODE       ");
 							if ((stat & 63)==20) printf(" %s","SCREEN$    ");
+							if ((stat & 63)==22) printf(" %s","DRIVER-APP "); // DRiVER App
+							if ((stat & 63)==23) printf(" %s","DRIVER-BOOT");
+							if ((stat & 63)==24) printf(" %s","EDOS NOMEN "); // Entropy EDOS (abandoned)
+							if ((stat & 63)==25) printf(" %s","EDOS SYSTEM");
+							if ((stat & 63)==26) printf(" %s","EDOS OVRLAY");
+							if ((stat & 63)==28) printf(" %s","HDOS DOS   "); // SD Software HDOS
+							if ((stat & 63)==29) printf(" %s","HDOS DIR   ");	
+							if ((stat & 63)==30) printf(" %s","HDOS DISK  ");	
+							if ((stat & 63)==31) printf(" %s","HDOS FRETMP");								
 							
 							// File size
 							
