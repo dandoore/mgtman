@@ -1080,6 +1080,7 @@ void Directorymgt(void)
 {
 int maxdtrack,nfiles,nfsect,flen,type,exec,startpage,startoffset,start,i,stat,track,sect,half;
 char	diskname[11], filename[11];
+char	blankname[] = "*         ";
 
 		if (validmgt == 0)
 		{
@@ -1106,6 +1107,11 @@ char	diskname[11], filename[11];
 
 			};
 			diskname[10]=0;
+			
+			// If diskname is set as empty then remove the '*'.
+			
+			if (!strcmp(diskname,blankname)) diskname[0] = 0;
+					
 			printf("\n        *** MasterDOS directory: %s ***        \n\n",diskname);
 			}
 			
@@ -1117,6 +1123,11 @@ char	diskname[11], filename[11];
 
 			};
 			diskname[10]=0;
+			
+			// If diskname is set as empty then remove the '*'.
+			
+			if (!strcmp(diskname,blankname)) diskname[0] = 0;
+			
 			printf("\n        *** BDOS directory: %s ***        \n\n",diskname);
 			}
 			
