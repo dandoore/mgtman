@@ -42,7 +42,7 @@ Update of Andrew Collier's SimCoupe .DSK manipulator for SAM Coupé disk images
 	interchangably so most DSK files relating to the SAM Coupe are the 819,200Kb (MGT)
 	format. Genuine (E)DSK files have an EDSK header and flexible file size.
 
-**Resources for building**
+**Resources for using with Z88DK**
 
 Files contained in /resources/ are to allow for compiling in Z88DK, creating an MGT file and executing in [SimCoupé](https://github.com/simonowen/simcoupe) now depricated due to sterling work over at Z88DK adding [MGT Support](https://github.com/z88dk/z88dk/commit/fa1f1b45901e4412f190353647667192b4c2e61b)
 * Windows batch file for compiling and executing in SimCoupé
