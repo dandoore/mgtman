@@ -1,4 +1,4 @@
-// Sam Coupe MGT/DSK Manipulator 2.1.0
+// Sam Coupe MGT/DSK Manipulator 2.1.1
 //
 // 		Hacky command line remix by Dan Dooré 
 //		1.0.0 MacOS by Andrew Collier
@@ -18,7 +18,7 @@ void Savemgt(char *mgtimage);
 void Openmgt(char *mgtimage);
 void DetectFormat();
 unsigned char *Addr(int track,int sector,int offset);
-void SaveFile(char *fname, int start, int exec);
+void SaveFile(char *fname, int type, int start, int exec, int mode);
 void LoadFile(char *filename);
 void TitleDisk(char *diskname);
 void Directorymgt(void);
@@ -34,7 +34,7 @@ unsigned char	*image,*valid;		// MGT image in memory
 
 int main(int argc, char **argv)
 {
-int	start,exec;
+int	start,exec,type,mode;
 int t;
 
 /* Arguments debug
@@ -73,6 +73,7 @@ int t;
 						 Directorymgt();
 						 exit(0);
 						}
+			
 					if (argv[1][1] == 'w')
 						{
 						 Openmgt(argv[2]);
@@ -108,7 +109,25 @@ int t;
 							{
 							exec = 0;	// 0 is not valid as an exec address, these must start in section C (0x8000)
 							};
-						 SaveFile(argv[3],start,exec);	
+							
+						 if (argv[1][2] == 's')
+							{
+								type=20; // If saving as a screen$ is type is 20
+								mode=argv[1][3] - '0'; 	// parse screen mode 1-4
+									if (mode <1 || mode >4)		// Check screen mode is valid (1-4)
+									{
+									printf("Invalid screen mode specified\n\n");
+									Help(argv[0]);
+									exit(1);
+									}
+							}
+							else
+							{
+								type=19; // If saving as CODE is 19
+								mode=0;
+							}
+											
+						 SaveFile(argv[3],type,start,exec,mode);	
 						 Savemgt(argv[2]);
 						 exit(0);
 						}
@@ -140,7 +159,7 @@ int t;
 
 void Usage(char *exename)
 {
-	printf("\nUsage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-w | -r <mgt-file> <samfile> [start-address] [execute-address]]\n\n",exename);
+	printf("\nUsage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-w |-ws[1-4] | -r <mgt-file> <samfile> [start-address] [execute-address]]\n\n",exename);
 	printf("For help page: %s -h  \n",exename);
 }
 
@@ -149,7 +168,7 @@ void Usage(char *exename)
 void Help(char *exename)
 {
 	printf("        ,\n");
-	printf("SAM Coupe .MGT/DSK image manipulator v2.1.0\n");
+	printf("SAM Coupe .MGT/DSK image manipulator v2.1.1\n");
 	printf("-------------------------------------------\n");
 	printf("                                         ,\n");
 	printf("2021 Hacky command line remix by Dan Doore\n");
@@ -157,12 +176,13 @@ void Help(char *exename)
 	printf("Quick and dirty ANSI C port by Thomas Harte\n");
 	printf("Command line enhancements by Frode Tennebo for Z88DK\n\n");
 	printf("https://github.com/dandoore/mgtman/\n\n");
-	printf("Usage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-w | -r <mgt-file> <samfile> [start-address] [execute-address]]\n\n",exename);
+	printf("Usage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-w |-ws[1-4] | -r <mgt-file> <samfile> [start-address] [execute-address]]\n\n",exename);
 	printf("  -h  This help\n");
 	printf("  -d  Directory listing of mgt-file\n");
 	printf("  -t  Title (change disk name) mgt-file with title-name where supported by the disk format\n");
 	printf("  -r  Read samfile from mgt-file\n");
 	printf("  -w  Write CODE samfile to mgt-file (create MGT file if not existing)\n");
+	printf("  -ws[mode]  Write SCREEN$ samfile (of mode) to mgt-file (create MGT file if not existing)\n");
 	printf("\nVariables:\n\n   mgt-file         MGT image disk file (can be new file when using -w)\n");
 	printf("   title-name       Disk title to write to mgt-file (Max 10 chars, 7-bit ASCII)\n");
 	printf("   samfile          Code filename on mgt-file or file system (Max 10 chars, 7-bit ASCII)\n");
@@ -170,6 +190,7 @@ void Help(char *exename)
 	printf("   execute-address  When writing to mgt-file code execute address (default none, >=16384))\n\n");
 	printf("Examples:\n\n   Directory of disk image:    %s -d test.mgt\n",exename);
 	printf("   Write auto-executing file:  %s -w test.mgt auto.cde 32768 32768\n",exename);
+	printf("   Write MODE 4 SCREEN$ file:  %s -ws4 test.mgt screen.ss4\n",exename);
 	printf("   Read file from disk image:  %s -r test.mgt file.c\n",exename);
     printf("   Change title of disk image: %s -t test.mgt mydisk\n\n",exename);
 	printf("Why is this called MGTman and not DSKman?\n");
@@ -302,7 +323,7 @@ unsigned char	*a;
 
 // Add file to RAM image
 
-void SaveFile(char *filename, int start, int exec)
+void SaveFile(char *filename, int type, int start, int exec, int mode)
 {
 unsigned char 	sectmap[195],usedmap[195],*found,*exists,samfile[10];
 int	filelength,maxdtrack,s,t,h,i,m,a,tt,ss;  
@@ -521,7 +542,7 @@ FILE	*file;
 			// Build directory and File entry
 			
 			i=0;
-			*Addr(t,s,0) = 19;			// Status - set type as CODE in 9 byte File Header
+			*Addr(t,s,0) = type;			// Status - set type in 9 byte File Header
 			
 			/*
 			Byte 	SAMDOS type 	Plus D type
@@ -544,7 +565,7 @@ FILE	*file;
 			When SAMDOS is paged in it resides at 4000H, and ROM0 is placed at 0-3FFFH.
 			*/
 			
-			*(found) = 19;				// Status - set type as CODE in Diretory Entry
+			*(found) = type;				// Status - set type in Diretory Entry
 		
 			
 			/*
@@ -756,6 +777,15 @@ FILE	*file;
 			*(found+14) = s;		// Start sector
 			*(found+220) = 0;		// Flags blank
 			
+			// Generate File Length for File and Dir
+
+			*(found+239) = filelength/16384;
+			*Addr(t,s,7) = filelength/16384;
+			*(found+240) = filelength%256;
+			*Addr(t,s,1) = filelength%256;
+			*(found+241) = (filelength%16384)/256;
+			*Addr(t,s,2) = (filelength%16384)/256;
+			
 			// Generate Start Address for File and Dir
 						
 			*(found+236) = (start/16384)-1;	
@@ -767,18 +797,9 @@ FILE	*file;
 			
 			// printf("\nPage: %u\nLSB: %u\nMSB: %u\n\n",(start/16384)-1,start%256,(start-(16384*((start/16384)-2)))/256);
 			
-			// Generate File Length for File and Dir
-
-			*(found+239) = filelength/16384;
-			*Addr(t,s,7) = filelength/16384;
-			*(found+240) = filelength%256;
-			*Addr(t,s,1) = filelength%256;
-			*(found+241) = (filelength%16384)/256;
-			*Addr(t,s,2) = (filelength%16384)/256;
-
-			// Generate Exec for directory only
+			// Generate Exec for Dir only for CODE (19) Files
 			
-			if (exec == 0)
+			if (type == 19 && exec == 0)
 				{
 					*(found+242) = 255;
 					*(found+243) = 255;
@@ -790,7 +811,15 @@ FILE	*file;
 					*(found+243) = exec%256;	// LSByte
 					*(found+244) = (exec-(16384*((exec/16384)-2)))/256;		// MSByte 
 				}
-						
+				
+			// Write SCREEN$ mode into Dir only for SCREEN$ (20) Files	
+			
+			if (type == 20 )
+				{
+					*(found+221) = mode-1;	
+				}
+			// Write file to image
+			
 			if (filelength < 502)
 			{
 				fread(Addr(t,s,9),1,filelength,file);
@@ -1078,7 +1107,7 @@ FILE	*file;
 
 void Directorymgt(void)
 {
-int maxdtrack,nfiles,nfsect,flen,type,exec,startpage,startoffset,start,i,stat,track,sect,half;
+int maxdtrack,nfiles,nfsect,flen,type,exec,startpage,startoffset,start,mode,i,stat,track,sect,half;
 char	diskname[11], filename[11];
 char	blankname[] = "*         ";
 
@@ -1217,6 +1246,16 @@ char	blankname[] = "*         ";
 												
 							printf("%7.0f ",(float)flen);
 														
+							// Details if SCREEN$ file
+							if ((stat & 63)==20)
+								{
+								mode = (*Addr(track,sect,256*half +221))+1;				
+								printf("  Mode: %1.0f ",(float)mode);
+								}
+								else
+								{
+									printf("       ");
+								};
 							// Code Start if code file
 							if ((stat & 63)==19)
 								{
