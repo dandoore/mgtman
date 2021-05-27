@@ -1,4 +1,4 @@
-// Sam Coupe MGT/DSK Manipulator 2.1.1
+// Sam Coupe MGT/DSK Manipulator 2.1.2
 //
 // 		Hacky command line remix by Dan Dooré 
 //		1.0.0 MacOS by Andrew Collier
@@ -80,6 +80,10 @@ int t;
 						 
 						 // This bit feels very hacky, must be an easier way to parse arguments of a variable number
 						 
+					if (argv[1][2] == '\n')
+						{
+						 type=19; // No additional write type specified, saving as CODE type 19
+						 mode=0;
 						 if (argc >= 5)
 							{
 							start = atoi(argv[4]);
@@ -107,13 +111,14 @@ int t;
 							}
 							else
 							{
-							exec = 0;	// 0 is not valid as an exec address, these must start in section C (0x8000)
+							exec = 0;	// 0 = do not exec; 0 is not valid as an exec address, these must start in section C (0x8000)
 							};
-							
+						}
+						
 						 if (argv[1][2] == 's')
 							{
 								type=20; // If saving as a screen$ is type is 20
-								mode=argv[1][3] - '0'; 	// parse screen mode 1-4
+								mode=argv[1][3] - '0'; 	// convert argument to integer to parse screen mode 1-4
 									if (mode <1 || mode >4)		// Check screen mode is valid (1-4)
 									{
 									printf("Invalid screen mode specified\n\n");
@@ -121,12 +126,25 @@ int t;
 									exit(1);
 									}
 							}
-							else
+						
+						 if (argv[1][2] == 'b')
 							{
-								type=19; // If saving as CODE is 19
-								mode=0;
-							}
-											
+							 type=16; // If saving as BASIC type is 16
+							 if (argc >= 5)
+								{
+								start = atoi(argv[4]);
+								if (start <1 || start > 65534)
+									{
+									printf("Start line out of range\n\n");
+									Help(argv[0]);
+									exit(1);
+									}
+								}
+							 else
+							 {
+							 start = 65536;
+							 };
+							}				
 						 SaveFile(argv[3],type,start,exec,mode);	
 						 Savemgt(argv[2]);
 						 exit(0);
@@ -176,23 +194,26 @@ void Help(char *exename)
 	printf("Quick and dirty ANSI C port by Thomas Harte\n");
 	printf("Command line enhancements by Frode Tennebo for Z88DK\n\n");
 	printf("https://github.com/dandoore/mgtman/\n\n");
-	printf("Usage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-w |-ws[1-4] | -r <mgt-file> <samfile> [start-address] [execute-address]]\n\n",exename);
+	printf("Usage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-w |-ws[1-4] | -wb | -r <mgt-file> <samfile>  [[start-address] [execute-address] | [line-number]]\n\n",exename);
 	printf("  -h  This help\n");
 	printf("  -d  Directory listing of mgt-file\n");
 	printf("  -t  Title (change disk name) mgt-file with title-name where supported by the disk format\n");
 	printf("  -r  Read samfile from mgt-file\n");
 	printf("  -w  Write CODE samfile to mgt-file (create MGT file if not existing)\n");
 	printf("  -ws[mode]  Write SCREEN$ samfile (of mode) to mgt-file (create MGT file if not existing)\n");
+	printf("  -wb  Write BASIC samfile to mgt-file (create MGT file if not existing)\n");
 	printf("\nVariables:\n\n   mgt-file         MGT image disk file (can be new file when using -w)\n");
 	printf("   title-name       Disk title to write to mgt-file (Max 10 chars, 7-bit ASCII)\n");
 	printf("   samfile          Code filename on mgt-file or file system (Max 10 chars, 7-bit ASCII)\n");
-    printf("   start-address    When writing to mgt-file code load start address (default 32768, >=16384)\n");
+	printf("   start-address    When writing to mgt-file code load start address (default 32768, >=16384)\n");
 	printf("   execute-address  When writing to mgt-file code execute address (default none, >=16384))\n\n");
+	printf("   line-number      When writing to mgt-file BASIC starting line (default none))\n\n");
 	printf("Examples:\n\n   Directory of disk image:    %s -d test.mgt\n",exename);
-	printf("   Write auto-executing file:  %s -w test.mgt auto.cde 32768 32768\n",exename);
-	printf("   Write MODE 4 SCREEN$ file:  %s -ws4 test.mgt screen.ss4\n",exename);
-	printf("   Read file from disk image:  %s -r test.mgt file.c\n",exename);
-    printf("   Change title of disk image: %s -t test.mgt mydisk\n\n",exename);
+	printf("   Write auto-executing file:      %s -w test.mgt auto.cde 32768 32768\n",exename);
+	printf("   Write MODE 4 SCREEN$ file:      %s -ws4 test.mgt screen.ss4\n",exename);
+	printf("   Write autostarting BASIC file:  %s -wb test.mgt file.bas 10\n",exename);
+	printf("   Read file from disk image:      %s -r test.mgt file.c\n",exename);
+	printf("   Change title of disk image:     %s -t test.mgt mydisk\n\n",exename);
 	printf("Why is this called MGTman and not DSKman?\n");
 	printf("-----------------------------------------\n");
 	printf("DSK files now relate to EDSK format files which are a flexible disk format.\n");
@@ -541,8 +562,6 @@ FILE	*file;
 			
 			// Build directory and File entry
 			
-			i=0;
-			*Addr(t,s,0) = type;			// Status - set type in 9 byte File Header
 			
 			/*
 			Byte 	SAMDOS type 	Plus D type
@@ -563,12 +582,7 @@ FILE	*file;
 			Read starting page number (byte 8). AND this with 1FH to get the page number in the range 0 to 31. To find the start, multiply the page number by 16384, add the offset and subtract 4000H (since the ROM occupies 0-3FFFH).
 
 			When SAMDOS is paged in it resides at 4000H, and ROM0 is placed at 0-3FFFH.
-			*/
-			
-			*(found) = type;				// Status - set type in Diretory Entry
 		
-			
-			/*
 			SAMDOS Directory
 
 			The first 4 tracks of the disk are allocated to the disk directory, starting at track 0, sector 1. These 4 
@@ -757,6 +771,14 @@ FILE	*file;
 						
 			*/
 			
+						
+			i=0;
+			
+			// Set File Type in File and Dir
+			
+			*Addr(t,s,0) = type;			// Set type in 9 byte File Header
+			*(found) = type;				// Set type in Diretory Entry
+			
 			// Pad filename to 10 chars with spaces for writing to SAM directory
 			i=0;
 			for (i=strlen(filename); i<10; i++)
@@ -818,6 +840,32 @@ FILE	*file;
 				{
 					*(found+221) = mode-1;	
 				}
+				
+			// Write BASIC details into Dir only for BASIC (16) Files		
+			
+			if (type == 16)
+				{
+					// RUN Line number (65535 is 'do not run')
+					*(found+243) = exec%256;	// LSByte
+					*(found+244) = exec/256;	// MSByte 
+	
+/*			221-231 	  	File type information
+			221-222		16-18 	If the file type is 16 then these bytes contain the program length excluding variables.
+			223-224		19-21 	If the file type is 16 then these bytes contain the program length plus numeric variables.
+			225-226		22-24 	If the file type is 16 then these bytes contain the program lengtrh plus numeric variables
+							and the gap length before string and array variables.
+							
+			232-235 27-30 	Spare 4 bytes (reserved).
+
+			242-244 37-39 	Execution address. Execution address, if CODE file, or line number if an autorunning BASIC program.
+								exec = *Addr(track,sect,256*half +243);
+								exec += 256* *Addr(track, sect, 256*half +244);
+								
+
+								
+*/
+				}
+				
 			// Write file to image
 			
 			if (filelength < 502)
@@ -1246,16 +1294,13 @@ char	blankname[] = "*         ";
 												
 							printf("%7.0f ",(float)flen);
 														
-							// Details if SCREEN$ file
+							// MODE details if SCREEN$ file
 							if ((stat & 63)==20)
 								{
 								mode = (*Addr(track,sect,256*half +221))+1;				
 								printf("  Mode: %1.0f ",(float)mode);
 								}
-								else
-								{
-									printf("       ");
-								};
+							
 							// Code Start if code file
 							if ((stat & 63)==19)
 								{
@@ -1275,14 +1320,54 @@ char	blankname[] = "*         ";
 								exec = *Addr(track,sect,256*half +243);
 								exec += 256* *Addr(track, sect, 256*half +244);
 						    												
-							if (exec < 65535)	// Valid start addresss
-								{
-								printf("%7.0f\n",(float)exec);
-								}
+								if (exec < 65535)	// Valid start addresss
+									{
+									printf("%7.0f ",(float)exec);
+									}
 								else
 								{
-								printf("\n");
+								printf(" - ");
 								};
+								
+								/* Temp bit for BASIC
+								exec = 16384 *((*Addr(track, sect, 256*half +221) & 31)-1);
+								exec += *Addr(track,sect,256*half +222);
+								exec += 256* *Addr(track, sect,256*half +223);
+								exec -= 16384;
+																					
+								printf("%7.0f *",(float)exec);
+								
+								exec = 16384 *((*Addr(track, sect, 256*half +224) & 31)-1);
+								exec += *Addr(track,sect,256*half +225);
+								exec += 256* *Addr(track, sect,256*half +226);
+								exec -= 16384;
+																					
+								printf("%7.0f *",(float)exec);
+								
+								
+								exec = 16384 *((*Addr(track, sect, 256*half +227) & 31)-1);
+								exec += *Addr(track,sect,256*half +228);
+								exec += 256* *Addr(track, sect,256*half +229);
+								exec -= 16384;
+						
+																					
+								printf("%7.0f *",(float)exec);
+								
+								/*
+								exec = *Addr(track,sect,256*half +223);
+								exec += 256* *Addr(track, sect, 256*half +224);
+								printf("%7.0f *",(float)exec);
+								
+								exec = *Addr(track,sect,256*half +225);
+								exec += 256* *Addr(track, sect, 256*half +226);
+								printf("%7.0f *",(float)exec);
+								
+							/*			221-231 	  	File type information
+			221-223		16-18 	If the file type is 16 then these bytes contain the program length excluding variables.
+			224-226		19-21 	If the file type is 16 then these bytes contain the program length plus numeric variables.
+			227-229		22-24 	If the file type is 16 then these bytes contain the program lengtrh plus numeric variables
+							and the gap length before string and array variables. */
+								printf("\n");
 							}
 							
 							// Execute address if CODE file
@@ -1292,7 +1377,7 @@ char	blankname[] = "*         ";
 								exec += *Addr(track,sect,256*half +243);
 								exec += 256* *Addr(track, sect, 256*half +244);
 								exec -= 32768; // take away offset
-																											
+								
 								if (exec != 540671)	// No exec addresss
 									{
 									printf("%7.0f\n",(float)exec);
@@ -1303,7 +1388,7 @@ char	blankname[] = "*         ";
 									};
 							}	
 
-							// If not code or BASIC (i.e. no addresses to show then carridge return)
+							// If not code or BASIC (i.e. no addresses/details to show) then carridge return
 							if ((((stat & 63)!=19) && (stat & 63)!=16)) printf("\n");
 							
 							nfsect -= *Addr(track,sect,256*half +12);
