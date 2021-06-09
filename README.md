@@ -1,5 +1,5 @@
 # mgtman
-Update of Andrew Collier's SimCoupe .DSK manipulator for SAM Coupé disk images
+Update of Andrew Collier's SimCoupe .DSK manipulator for SAM Coupé disk images using the command line.
 
 **Features**
 
