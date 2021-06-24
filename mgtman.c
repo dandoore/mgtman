@@ -1138,7 +1138,7 @@ void Directorymgt(void) {
               {
                 printf("%7.0f ", (float) exec);
               } else {
-                printf(" - ");
+                printf("        ");
               };
 
               // Temp bit for BASIC
@@ -1147,7 +1147,7 @@ void Directorymgt(void) {
 				exec += 256* *Addr(track, sect,256*half +223);
 				exec -= 16384;
 
-				printf("%7.0f *",(float)exec);
+				printf("BASIC: * %7.0f *",(float)exec);
 				
 				exec = 16384 *((*Addr(track, sect, 256*half +224) & 31)-1);
 				exec += *Addr(track,sect,256*half +225);
