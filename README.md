@@ -7,7 +7,7 @@ Update of Andrew Collier's SimCoupe .DSK manipulator for SAM Coupé disk images 
 * Reading and writing of CODE files (SamDOS, MasterDOS, BDOS)
 * Writing of SCREEEN$ files (SamDOS, MasterDOS, BDOS)
 * Write disk title (MasterDOS/BDOS/UNI-DOS)
-* Wrting of BASIC files (in progress)
+* Writing of BASIC files (in progress)
 
 **Resources for using with Z88DK**
 
