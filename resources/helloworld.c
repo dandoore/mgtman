@@ -1,6 +1,6 @@
-//
+//            ,
 //    Sam Coupe Hello World
-//    helloworld.c                             
+//    helloworld.c
 //
 
 #include "stdio.h"

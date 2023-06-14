@@ -28,11 +28,11 @@ rename a.bin %OUTPUT%
 IF NOT %ERRORLEVEL% == 0  GOTO FAIL
 
 echo Copying %DOSFILE% to %FILE%.mgt...
-mgtman -w %FILE%.mgt %DOSFILE%
+mgtman -wc %FILE%.mgt %DOSFILE%
 IF NOT %ERRORLEVEL% == 0  GOTO FAIL
 
-echo Copying auto.bin to %FILE%.mgt...
-mgtman -w %FILE%.mgt %OUTPUT% 32768 32768
+echo Copying %OUTPUT% to %FILE%.mgt...
+mgtman -wc %FILE%.mgt %OUTPUT% 32768 32768
 IF NOT %ERRORLEVEL% == 0  GOTO FAIL
 
 echo Removing binary %OUTPUT%...
