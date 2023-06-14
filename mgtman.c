@@ -1,4 +1,4 @@
-// Sam Coupe MGT/DSK Manipulator 2.1.1
+// Sam Coupe MGT/DSK Manipulator 2.1.2
 //
 // Hacky command line remix by Dan Dooré 
 // 1.0.0 MacOS by Andrew Collier
@@ -8,8 +8,11 @@
 // https://github.com/dandoore/mgtman/
 
 #include <stdio.h>
+
 #include <stdlib.h>
+
 #include <ctype.h>
+
 #include <string.h>
 
 // Prototypes
@@ -41,36 +44,37 @@ int main(int argc, char ** argv) {
   int i=0;
   printf("ARGC: %u\n",argc);
   for (i=0; i<=argc; i++) {
-    printf("ARG%u: %s\n",i,argv[i]);
+    printf("ARG%u: *%s*\n",i,argv[i]);
   }
   */
-  
+
   if ((image = malloc(819200)) == (unsigned char * ) NULL) {
     printf("Not enough free memory to load .MGT file\n");
     exit(1);
   } else {
-    if (argc < 2) {
+    if (argc < 2) { // Not enough arguments
       Usage(argv[0]);
       exit(1);
     }
     if (argc >= 2) {
       if (argv[1][0] == '-') {
-        if (argv[1][1] == 'h') {
+        if (argv[1][1] == 'h') { // Help
           Help(argv[0]);
           exit(0);
         }
-        if (argv[1][1] == 'd') {
+        if (argv[1][1] == 'd') { // Directory Print
           Openmgt(argv[2]);
           Directorymgt();
           exit(0);
         }
 
-        if (argv[1][1] == 'w') {
+        if (argv[1][1] == 'w') { // Write file - second character of argument defines type
           Openmgt(argv[2]);
+          type = 0; // Set file type to 0 so we can check if no write type specified
 
-          // This bit feels very hacky, must be an easier way to parse arguments of a variable number
+          // This bit still feels very hacky, must be an easier way to parse arguments of a variable number
 
-          if (argv[1][2] == '\n') {
+          if (argv[1][2] == 'c') {
             type = 19; // No additional write type specified, saving as CODE type 19
             mode = 0;
             if (argc >= 5) {
@@ -99,7 +103,7 @@ int main(int argc, char ** argv) {
           }
 
           if (argv[1][2] == 's') {
-            type = 20; // If saving as a screen$ is type is 20
+            type = 20; // If saving as a SCREEN$ is type is 20
             mode = argv[1][3] - '0'; // convert argument to integer to parse screen mode 1-4
             if (mode < 1 || mode > 4) // Check screen mode is valid (1-4)
             {
@@ -122,9 +126,14 @@ int main(int argc, char ** argv) {
               start = 65536;
             };
           }
-          SaveFile(argv[3], type, start, exec, mode);
-          Savemgt(argv[2]);
-          exit(0);
+          if (type != 0) { // If filetype has been set then save file, otherwise return usage
+            SaveFile(argv[3], type, start, exec, mode);
+            Savemgt(argv[2]);
+            exit(0);
+          } else {
+            Usage(argv[0]);
+            exit(1);
+          }
         }
         if (argv[1][1] == 'r') {
           Openmgt(argv[2]);
@@ -150,7 +159,7 @@ int main(int argc, char ** argv) {
 // Usage text
 
 void Usage(char * exename) {
-  printf("Usage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-w |-ws[1-4] | -wb | -r <mgt-file> <samfile>  [[start-address] [execute-address] | [line-number]]\n\n", exename);
+  printf("Usage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-wc |-ws[1-4] | -wb | -r <mgt-file> <samfile>  [[start-address] [execute-address] | [line-number]]\n\n", exename);
   printf("For help page: %s -h  \n", exename);
 }
 
@@ -158,7 +167,7 @@ void Usage(char * exename) {
 
 void Help(char * exename) {
   printf("        ,\n");
-  printf("SAM Coupe .MGT/DSK image manipulator v2.1.1\n");
+  printf("SAM Coupe .MGT/DSK image manipulator v2.1.2\n");
   printf("-------------------------------------------\n");
   printf("                                         ,\n");
   printf("2021 Hacky command line remix by Dan Doore\n");
@@ -166,12 +175,12 @@ void Help(char * exename) {
   printf("Quick and dirty ANSI C port by Thomas Harte\n");
   printf("Command line enhancements by Frode Tennebo for Z88DK\n\n");
   printf("https://github.com/dandoore/mgtman/\n\n");
-  printf("Usage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-w |-ws[1-4] | -wb | -r <mgt-file> <samfile>  [[start-address] [execute-address] | [line-number]]\n\n", exename);
+  printf("Usage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-wc |-ws[1-4] | -wb | -r <mgt-file> <samfile>  [[start-address] [execute-address] | [line-number]]\n\n", exename);
   printf("  -h  This help\n");
   printf("  -d  Directory listing of mgt-file\n");
   printf("  -t  Title (change disk name) mgt-file with title-name where supported by the disk format\n");
   printf("  -r  Read samfile from mgt-file\n");
-  printf("  -w  Write CODE samfile to mgt-file (create MGT file if not existing)\n");
+  printf("  -wc  Write CODE samfile to mgt-file (create MGT file if not existing)\n");
   printf("  -ws[mode]  Write SCREEN$ samfile (of mode) to mgt-file (create MGT file if not existing)\n");
   printf("  -wb  Write BASIC samfile to mgt-file (create MGT file if not existing)\n");
   printf("\nVariables:\n\n   mgt-file         MGT image disk file (can be new file when using -w)\n");
@@ -181,7 +190,7 @@ void Help(char * exename) {
   printf("   execute-address  When writing to mgt-file code execute address (default none, >=16384))\n\n");
   printf("   line-number      When writing to mgt-file BASIC starting line (default none))\n\n");
   printf("Examples:\n\n   Directory of disk image:    %s -d test.mgt\n", exename);
-  printf("   Write auto-executing file:      %s -w test.mgt auto.cde 32768 32768\n", exename);
+  printf("   Write auto-executing file:      %s -wc test.mgt auto.cde 32768 32768\n", exename);
   printf("   Write MODE 4 SCREEN$ file:      %s -ws4 test.mgt screen.ss4\n", exename);
   printf("   Write autostarting BASIC file:  %s -wb test.mgt file.bas 10\n", exename);
   printf("   Read file from disk image:      %s -r test.mgt file.c\n", exename);
@@ -743,9 +752,9 @@ void SaveFile(char * filename, int type, int start, int exec, int mode) {
         /* More to do here - how the heck do I find these out, or just leave blank?
         		
         	221-231 	  	File type information
-        	221-222		16-18 	If the file type is 16 then these bytes contain the program length excluding variables.
-        	223-224		19-21 	If the file type is 16 then these bytes contain the program length plus numeric variables.
-        	225-226		22-24 	If the file type is 16 then these bytes contain the program lengtrh plus numeric variables
+        	221-223		16-18 	If the file type is 16 then these bytes contain the program length excluding variables.
+        	224-226		19-21 	If the file type is 16 then these bytes contain the program length plus numeric variables.
+        	227-229		22-24 	If the file type is 16 then these bytes contain the program lengtrh plus numeric variables
         					and the gap length before string and array variables.
         	232-235 27-30 	Spare 4 bytes (reserved).
         	242-244 37-39 	Execution address. Execution address, if CODE file, or line number if an autorunning BASIC program.
@@ -1142,40 +1151,46 @@ void Directorymgt(void) {
               };
 
               // Temp bit for BASIC
-				exec = 16384 *((*Addr(track, sect, 256*half +221) & 31)-1);
-				exec += *Addr(track,sect,256*half +222);
-				exec += 256* *Addr(track, sect,256*half +223);
-				exec -= 16384;
+              // 221-223		16-18 	If the file type is 16 then these bytes contain the program length excluding variables. (16K pages, remaining lsb byte, remainign msb byte)
 
-				printf("BASIC: * %7.0f *",(float)exec);
-				
-				exec = 16384 *((*Addr(track, sect, 256*half +224) & 31)-1);
-				exec += *Addr(track,sect,256*half +225);
-				exec += 256* *Addr(track, sect,256*half +226);
-				exec -= 16384;
+              exec = 16384 * (( * Addr(track, sect, 256 * half + 221) & 31));
+              printf("Page: %7.0f *", (float) exec);
 
-				printf("%7.0f *",(float)exec);
+              exec = * Addr(track, sect, 256 * half + 222);
+              printf("Low: %7.0f *", (float) exec);
 
-				exec = 16384 *((*Addr(track, sect, 256*half +227) & 31)-1);
-				exec += *Addr(track,sect,256*half +228);
-				exec += 256* *Addr(track, sect,256*half +229);
-				exec -= 16384;
+              exec = 256 * ( * Addr(track, sect, 256 * half + 223) & 63);
+              printf("High: %7.0f *", (float) exec);
 
-				printf("%7.0f *",(float)exec);
-				/*
-				exec = *Addr(track,sect,256*half +223);
-				exec += 256* *Addr(track, sect, 256*half +224);
-				printf("%7.0f *",(float)exec);
+              /*
+              // 224-226		19-21 	If the file type is 16 then these bytes contain the program length plus numeric variables.
+              exec = 16384 *((*Addr(track, sect, 256*half +224) & 31)-1);
+              exec += *Addr(track,sect,256*half +225);
+              exec += 256* *Addr(track, sect,256*half +226);
+              exec -= 16384;
 
-				exec = *Addr(track,sect,256*half +225);
-				exec += 256* *Addr(track, sect, 256*half +226);
-				printf("%7.0f *",(float)exec);
-				/*
-				221-231 	  	File type information
-				221-223		16-18 	If the file type is 16 then these bytes contain the program length excluding variables.
-				224-226		19-21 	If the file type is 16 then these bytes contain the program length plus numeric variables.
-				227-229		22-24 	If the file type is 16 then these bytes contain the program lengtrh plus numeric variables
-									and the gap length before string and array variables. */
+              printf("%7.0f *",(float)exec);
+
+              exec = 16384 *((*Addr(track, sect, 256*half +227) & 31)-1);
+              exec += *Addr(track,sect,256*half +228);
+              exec += 256* *Addr(track, sect,256*half +229);
+              exec -= 16384;
+
+              printf("%7.0f *",(float)exec);
+              /*
+              exec = *Addr(track,sect,256*half +223);
+              exec += 256* *Addr(track, sect, 256*half +224);
+              printf("%7.0f *",(float)exec);
+
+              exec = *Addr(track,sect,256*half +225);
+              exec += 256* *Addr(track, sect, 256*half +226);
+              printf("%7.0f *",(float)exec);
+              /*
+              221-231 	  	File type information
+              221-223		16-18 	If the file type is 16 then these bytes contain the program length excluding variables.
+              224-226		19-21 	If the file type is 16 then these bytes contain the program length plus numeric variables.
+              227-229		22-24 	If the file type is 16 then these bytes contain the program lengtrh plus numeric variables
+              					and the gap length before string and array variables. */
               printf("\n");
             }
 
