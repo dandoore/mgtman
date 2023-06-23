@@ -37,7 +37,6 @@ int validmgt, format; // Status and format of MGT image in memory
 
 int main(int argc, char ** argv) {
   int start, exec, type, mode;
-  int t;
 
   /* Arguments debug
 
@@ -75,7 +74,7 @@ int main(int argc, char ** argv) {
           // This bit still feels very hacky, must be an easier way to parse arguments of a variable number
 
           if (argv[1][2] == 'c') {
-            type = 19; // No additional write type specified, saving as CODE type 19
+            type = 19; // If saving as a CODE type is 19
             mode = 0;
             if (argc >= 5) {
               start = atoi(argv[4]);
@@ -103,7 +102,7 @@ int main(int argc, char ** argv) {
           }
 
           if (argv[1][2] == 's') {
-            type = 20; // If saving as a SCREEN$ is type is 20
+            type = 20; // If saving as a SCREEN$ type is 20
             mode = argv[1][3] - '0'; // convert argument to integer to parse screen mode 1-4
             if (mode < 1 || mode > 4) // Check screen mode is valid (1-4)
             {
@@ -115,6 +114,7 @@ int main(int argc, char ** argv) {
 
           if (argv[1][2] == 'b') {
             type = 16; // If saving as BASIC type is 16
+            mode = 0;
             if (argc >= 5) {
               start = atoi(argv[4]);
               if (start < 1 || start > 65534) {
@@ -135,12 +135,12 @@ int main(int argc, char ** argv) {
             exit(1);
           }
         }
-        if (argv[1][1] == 'r') {
+        if (argv[1][1] == 'r') {  // Read File
           Openmgt(argv[2]);
           LoadFile(argv[3]);
           exit(0);
         }
-        if (argv[1][1] == 't') {
+        if (argv[1][1] == 't') { // Disk Title (MasterDOS/BDOS/UNI-DOS)
           Openmgt(argv[2]);
           TitleDisk(argv[3]);
           Savemgt(argv[2]);
@@ -159,7 +159,7 @@ int main(int argc, char ** argv) {
 // Usage text
 
 void Usage(char * exename) {
-  printf("Usage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-wc |-ws[1-4] | -wb | -r <mgt-file> <samfile>  [[start-address] [execute-address] | [line-number]]\n\n", exename);
+  printf("Usage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [[-wc |-ws[1-4] | -wb | -r] <mgt-file> <samfile> [[start-address] [execute-address] | [line-number]]]\n\n", exename);
   printf("For help page: %s -h  \n", exename);
 }
 
@@ -175,7 +175,7 @@ void Help(char * exename) {
   printf("Quick and dirty ANSI C port by Thomas Harte\n");
   printf("Command line enhancements by Frode Tennebo for Z88DK\n\n");
   printf("https://github.com/dandoore/mgtman/\n\n");
-  printf("Usage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [-wc |-ws[1-4] | -wb | -r <mgt-file> <samfile>  [[start-address] [execute-address] | [line-number]]\n\n", exename);
+  printf("Usage: %s [-h] [-d <mgt-file>] [-t <mgt-file> <title-name>] [[-wc |-ws[1-4] | -wb | -r] <mgt-file> <samfile> [[start-address] [execute-address] | [line-number]]]\n\n", exename);
   printf("  -h  This help\n");
   printf("  -d  Directory listing of mgt-file\n");
   printf("  -t  Title (change disk name) mgt-file with title-name where supported by the disk format\n");
@@ -189,7 +189,8 @@ void Help(char * exename) {
   printf("   start-address    When writing to mgt-file code load start address (default 32768, >=16384)\n");
   printf("   execute-address  When writing to mgt-file code execute address (default none, >=16384))\n\n");
   printf("   line-number      When writing to mgt-file BASIC starting line (default none))\n\n");
-  printf("Examples:\n\n   Directory of disk image:    %s -d test.mgt\n", exename);
+  printf("Examples:\n\n");
+  printf("   Directory of disk image:        %s -d test.mgt\n", exename);
   printf("   Write auto-executing file:      %s -wc test.mgt auto.cde 32768 32768\n", exename);
   printf("   Write MODE 4 SCREEN$ file:      %s -ws4 test.mgt screen.ss4\n", exename);
   printf("   Write autostarting BASIC file:  %s -wb test.mgt file.bas 10\n", exename);
