@@ -1,4 +1,4 @@
-// Sam Coupe MGT/DSK Manipulator 2.1.2
+// Sam Coupe MGT/DSK Manipulator 2.1.3
 //
 // Hacky command line remix by Dan Dooré 
 // 1.0.0 MacOS by Andrew Collier
@@ -167,7 +167,7 @@ void Usage(char * exename) {
 
 void Help(char * exename) {
   printf("        ,\n");
-  printf("SAM Coupe .MGT/DSK image manipulator v2.1.2\n");
+  printf("SAM Coupe .MGT/DSK image manipulator v2.1.3\n");
   printf("-------------------------------------------\n");
   printf("                                         ,\n");
   printf("2021 Hacky command line remix by Dan Doore\n");
