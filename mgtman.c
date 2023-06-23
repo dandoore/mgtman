@@ -135,7 +135,7 @@ int main(int argc, char ** argv) {
             exit(1);
           }
         }
-        if (argv[1][1] == 'r') {  // Read File
+        if (argv[1][1] == 'r') { // Read File
           Openmgt(argv[2]);
           LoadFile(argv[3]);
           exit(0);
@@ -242,32 +242,28 @@ void DetectFormat() {
   if (validmgt == 0) {
     printf("MGT file not found");
     exit(1);
-
-    // Detect Format from first directory entry
-    //
-    // Format 0 = SamDOS, 1 = MasterDOS, 2 = BDOS, 3=GDOS(DISCiPLE)/G+DOS(PlusD), 4=UNI-DOS
-
-    found = Addr(0, 1, 0); // First sector, first directory entry
-
-    format = 0;
-    if ( * (found + 255) == 255) format = 0; // SamDOS format 
-    if ( * (found + 252) != 0 && * (found + 253) != 0 && * (found + 252) != 32) format = 1; // MasterDOS format 
-    if ( * (found + 255) == 32) format = 2; // BDOS format 
-
-    if (( * (found) & 63) >= 1 && ( * (found) & 63) <= 13) // If first file entry is a ZX File type
-    {
-      format = 3; // GDOS(DISCiPLE)/G+DOS(PlusD)
-      if ( * (found + 244) != 0) format = 4; //UNI-DOS marker
-    }
-
-    /* Debug - print first entry values
-    
-    for (i=0; i<=255; i++) {
-      if (i<15 || i>209) printf("%u: %u %c\n",i,*(found+i),*(found+i));
-    }
-    printf("\nFormat: %u\n",format);
-    */
   }
+
+  // Detect Format from first directory entry
+  //
+  // Format 0 = SamDOS, 1 = MasterDOS, 2 = BDOS, 3=GDOS(DISCiPLE)/G+DOS(PlusD), 4=UNI-DOS
+  found = Addr(0, 1, 0); // First sector, first directory entry
+  format = 0;
+  if ( * (found + 255) == 255) format = 0; // SamDOS format 
+  if ( * (found + 252) != 0 && * (found + 253) != 0 && * (found + 252) != 32) format = 1; // MasterDOS format 
+  if ( * (found + 255) == 32) format = 2; // BDOS format 
+  if (( * (found) & 63) >= 1 && ( * (found) & 63) <= 13) // If first file entry is a ZX File type
+  {
+    format = 3; // GDOS(DISCiPLE)/G+DOS(PlusD)
+    if ( * (found + 244) != 0) format = 4; //UNI-DOS marker
+  }
+  /* Debug - print first entry values
+   
+   for (i=0; i<=255; i++) {
+     if (i<15 || i>209) printf("%u: %u %c\n",i,*(found+i),*(found+i));
+   }
+   printf("\nFormat: %u\n",format);
+   */
 }
 // Write out RAM image as MGT file
 
@@ -1151,7 +1147,7 @@ void Directorymgt(void) {
                 printf("        ");
               };
 
-              // Temp bit for BASIC
+              /* Debug bit for BASIC
               // 221-223		16-18 	If the file type is 16 then these bytes contain the program length excluding variables. (16K pages, remaining lsb byte, remainign msb byte)
 
               exec = 16384 * (( * Addr(track, sect, 256 * half + 221) & 31));
