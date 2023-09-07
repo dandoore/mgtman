@@ -697,12 +697,7 @@ void SaveFile(char * filename, int type, int start, int exec, int mode) {
 
       i = (filelength + 9) / 510;
       *(found + 11) = i / 256; //MSB sectors used
-
-      if (i / 256 > 0) { //Sanity check LSB sectors used
-        *(found + 12) = i % 256; //LSB sectors used calculated
-      } else {
-        *(found + 12) = 1; //LSB sectors used cannot be zero so make it 1.
-      }
+      *(found + 12) = (i % 256)+1; //LSB sectors used
       *(found + 13) = t; // Start Track
       *(found + 14) = s; // Start sector
       *(found + 220) = 0; // Flags blank
