@@ -1,4 +1,4 @@
-// Sam Coupe MGT/DSK Manipulator 2.1.3
+// Sam Coupe MGT/DSK Manipulator 2.1.4
 //
 // Hacky command line remix by Dan Dooré 
 // 1.0.0 MacOS by Andrew Collier
@@ -6,6 +6,7 @@
 // Command line enhancement by Frode Tennebø for z88dk
 //
 // https://github.com/dandoore/mgtman/
+
 
 #include <stdio.h>
 
@@ -74,7 +75,7 @@ int main(int argc, char ** argv) {
           // This bit still feels very hacky, must be an easier way to parse arguments of a variable number
 
           if (argv[1][2] == 'c') {
-            type = 19; // If saving as a CODE type is 19
+            type = 19; // If saving as CODE, type is 19
             mode = 0;
             if (argc >= 5) {
               start = atoi(argv[4]);
@@ -102,7 +103,7 @@ int main(int argc, char ** argv) {
           }
 
           if (argv[1][2] == 's') {
-            type = 20; // If saving as a SCREEN$ type is 20
+            type = 20; // If saving as SCREEN$, type is 20
             mode = argv[1][3] - '0'; // convert argument to integer to parse screen mode 1-4
             if (mode < 1 || mode > 4) // Check screen mode is valid (1-4)
             {
@@ -113,7 +114,7 @@ int main(int argc, char ** argv) {
           }
 
           if (argv[1][2] == 'b') {
-            type = 16; // If saving as BASIC type is 16
+            type = 16; // If saving as BASIC, type is 16
             mode = 0;
             if (argc >= 5) {
               start = atoi(argv[4]);
@@ -167,7 +168,7 @@ void Usage(char * exename) {
 
 void Help(char * exename) {
   printf("        ,\n");
-  printf("SAM Coupe .MGT/DSK image manipulator v2.1.3\n");
+  printf("SAM Coupe .MGT/DSK image manipulator v2.1.4\n");
   printf("-------------------------------------------\n");
   printf("                                         ,\n");
   printf("2021 Hacky command line remix by Dan Doore\n");
@@ -696,7 +697,12 @@ void SaveFile(char * filename, int type, int start, int exec, int mode) {
 
       i = (filelength + 9) / 510;
       *(found + 11) = i / 256; //MSB sectors used
-      *(found + 12) = i % 256; //LSB sectors used
+
+      if (i / 256 > 0) { //Sanity check LSB sectors used
+        *(found + 12) = i % 256; //LSB sectors used calculated
+      } else {
+        *(found + 12) = 1; //LSB sectors used cannot be zero so make it 1.
+      }
       *(found + 13) = t; // Start Track
       *(found + 14) = s; // Start sector
       *(found + 220) = 0; // Flags blank
