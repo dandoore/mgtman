@@ -1,4 +1,4 @@
-// Sam Coupe MGT/DSK Manipulator 2.2.0
+// Sam Coupe MGT/DSK Manipulator 2.2.1
 //
 // Hacky command line remix by Dan Dooré 
 // 1.0.0 MacOS by Andrew Collier
@@ -167,7 +167,7 @@ void Usage(char * exename) {
 
 void Help(char * exename) {
   printf("        ,\n");
-  printf("SAM Coupe .MGT/DSK image manipulator v2.2.0\n");
+  printf("SAM Coupe .MGT/DSK image manipulator v2.2.1\n");
   printf("-------------------------------------------\n");
   printf("                                         ,\n");
   printf("2021 Hacky command line remix by Dan Doore\n");
@@ -246,7 +246,9 @@ void DetectFormat() {
 
   // Detect Format from first directory entry
   //
-  // Format 0 = SamDOS, 1 = MasterDOS, 2 = BDOS, 3=GDOS(DISCiPLE)/G+DOS(PlusD), 4=UNI-DOS
+  // SAM Format 0 = SamDOS, 1 = MasterDOS, 2 = BDOS, (3-9 reserved for other SAM formats)
+  // ZX Format 10 = GDOS(DISCiPLE)/G+DOS(PlusD), 11 = UNI-DOS
+
   found = Addr(0, 1, 0); // First sector, first directory entry
   format = 0;
   if ( * (found + 255) == 255) format = 0; // SamDOS format 
@@ -254,8 +256,8 @@ void DetectFormat() {
   if ( * (found + 255) == 32) format = 2; // BDOS format 
   if (( * (found) & 63) >= 1 && ( * (found) & 63) <= 13) // If first file entry is a ZX File type
   {
-    format = 3; // GDOS(DISCiPLE)/G+DOS(PlusD)
-    if ( * (found + 244) != 0) format = 4; //UNI-DOS marker
+    format = 10; // GDOS(DISCiPLE)/G+DOS(PlusD)
+    if ( * (found + 244) != 0) format = 11; //UNI-DOS marker
   }
   /* Debug - print first entry values
    
@@ -315,7 +317,7 @@ void SaveFile(char * filename, int type, int start, int exec, int mode) {
 
   // Test format type for current compatibility
 
-  if (format >= 4) {
+  if (format >= 10) {
     printf("Sorry, file operations only supported on SAM Coupe formats right now.\n");
     exit(1);
   }
@@ -340,7 +342,7 @@ void SaveFile(char * filename, int type, int start, int exec, int mode) {
 
     // Number of directory tracks to scan
 
-    if ( * (image + 255) == 255) //SamDOS format
+    if ( * (image + 255) == 255) //Standard 4 track directory format
     {
       maxdtrack = 4;
     } else {
@@ -470,6 +472,9 @@ void SaveFile(char * filename, int type, int start, int exec, int mode) {
       // Build directory and File entry
 
       /*
+	  
+	  File Header
+	  
 	Byte 	SAMDOS type 	Plus D type
 	-----------------------------------
 	0 		File type 		File type
@@ -844,7 +849,7 @@ void TitleDisk(char * diskname) {
     exit(1);
   }
 
-  if (format == 0 || format == 3) {
+  if (format == 0 || format == 10) {
     printf("Sorry, disk rename only supported on MasterDOS/BDOS/UNI-DOS.\n");
     exit(1);
   }
@@ -865,7 +870,7 @@ void TitleDisk(char * diskname) {
     };
   }
 
-  if (format == 4) // UNI-DOS
+  if (format == 11) // UNI-DOS
   {
     found = Addr(0, 1, 0); // First sector, first directory entry
     for (i = 0; i < 10; i++) {
@@ -887,7 +892,7 @@ void LoadFile(char * filename) {
     exit(1);
   }
 
-  if (format >= 4) {
+  if (format >= 10) {
     printf("Sorry, file operations only supported on SAM Coupe formats right now.\n");
     exit(1);
   }
@@ -908,7 +913,7 @@ void LoadFile(char * filename) {
 
   found = NULL;
 
-  if ( * (image + 255) == 255) // SamDOS format 
+  if ( * (image + 255) == 255) // Standard 4 track directory format
   {
     maxdtrack = 4;
   } else {
@@ -1046,11 +1051,11 @@ void Directorymgt(void) {
     printf("\n        *** BDOS directory: %s ***        \n\n", diskname);
   }
 
-  if (format == 3) {
+  if (format == 10) {
     printf("\n        *** G(+)DOS directory ***            \n\n");
   }
 
-  if (format == 4) {
+  if (format == 11) {
     for (i = 0; i < 10; i++) {
       diskname[i] = * (image + 246 + i); // 246 in first entry is Disk Name under UNI-DOS
     };
@@ -1098,14 +1103,14 @@ void Directorymgt(void) {
             if ((stat & 63) == 9) printf(" %s", "ZX SNP 128k");
             if ((stat & 63) == 10) printf(" %s", "OPENTYPE   ");
             if ((stat & 63) == 11) printf(" %s", "EXECUTE    "); // Only valid on DISCiPLE/+D hardware as writes bytes to onboard device 8K RAM
-            if ((stat & 63) == 12) printf(" %s", "DIR        "); // UNI-DOS only
+            if ((stat & 63) == 12) printf(" %s", "DIR   (UNI)"); // UNI-DOS only
             if ((stat & 63) == 13) printf(" %s", "CREATE     "); // UNI-DOS only
             if ((stat & 63) == 16) printf(" %s", "BASIC      ");
             if ((stat & 63) == 17) printf(" %s", "D.ARRAY    ");
             if ((stat & 63) == 18) printf(" %s", "$.ARRAY    ");
             if ((stat & 63) == 19) printf(" %s", "CODE       ");
             if ((stat & 63) == 20) printf(" %s", "SCREEN$    ");
-            if ((stat & 63) == 21) printf(" %s", "DIR        "); // In MasterDOS, SAMDOS uses 'WHAT?' for this
+            if ((stat & 63) == 21) printf(" %s", "DIR  (MDOS)"); // In MasterDOS, SAMDOS uses 'WHAT?' for this
             if ((stat & 63) == 22) printf(" %s", "DRIVER-APP ");
             if ((stat & 63) == 23) printf(" %s", "DRIVER-BOOT");
             if ((stat & 63) == 24) printf(" %s", "EDOS NOMEN "); // Entropy EDOS (abandoned)
@@ -1125,40 +1130,72 @@ void Directorymgt(void) {
               printf("      ");
             };
             // File size
-            if ((format < 3) && ((stat & 63) != 5) && ((stat & 63) != 9)) { // Ignore filesize for ZX images and filetypes SNAP 48K/128K as data not in directory
-              flen = * Addr(track, sect, 256 * half + 240);
-              flen += 256 * * Addr(track, sect, 256 * half + 241);
-              flen += 16384 * * Addr(track, sect, 256 * half + 239);
-              printf("%7.0f ", (float) flen);
-            } else {
-              printf("        ");
+            if (format >= 10) { // ZX Format
+              if (((stat & 63) != 12)) { // Ignore size for filetypes DIR
+                flen = * Addr(track, sect, 256 * half + 212);
+                flen += 256 * * Addr(track, sect, 256 * half + 213);
+                printf("%7.0f ", (float) flen);
+              } else {
+                printf("        ");
+              };
             };
+            if (format < 10) { // Sam Format
+              if (((stat & 63) != 5) && ((stat & 63) != 9)) { // Ignore filesize for filetypes SNAP 48K/128K as data not in directory
+                flen = * Addr(track, sect, 256 * half + 240);
+                flen += 256 * * Addr(track, sect, 256 * half + 241);
+                flen += 16384 * * Addr(track, sect, 256 * half + 239);
+                printf("%7.0f ", (float) flen);
+              } else {
+                printf("        ");
+              };
+            };
+
+            // Code Start Address  if SAM code file
+            if ((stat & 63) == 19) {
+              start = * Addr(track, sect, 256 * half + 237);
+              start += 256 * * Addr(track, sect, 256 * half + 238);
+              start += 16384 * (( * Addr(track, sect, 256 * half + 236) & 31) - 1);
+              printf("%7.0f ", (float) start);
+            } else {
+              //printf("       ");
+            };
+
+            // Code Start Address if ZX code file
+            if ((stat & 63) == 4) {
+              start = * Addr(track, sect, 256 * half + 214);
+              start += 256 * * Addr(track, sect, 256 * half + 215);
+              printf("%7.0f ", (float) start);
+            } else {
+              //printf("       ");
+            };
+
             // MODE details if SCREEN$ file
             if ((stat & 63) == 20) {
               mode = ( * Addr(track, sect, 256 * half + 221)) + 1;
               printf("  Mode: %1.0f ", (float) mode);
             }
 
-            // Code Start if code file
-            if ((stat & 63) == 19) {
-              start = 16384 * (( * Addr(track, sect, 256 * half + 236) & 31) - 1);
-              start += * Addr(track, sect, 256 * half + 237);
-              start += 256 * * Addr(track, sect, 256 * half + 238);
-              printf("%7.0f ", (float) start);
-            } else {
-              printf("       ");
-            };
+            // RUN/GOTO line if ZXBASIC file	
+            if ((stat & 63) == 1) {
+              exec = * Addr(track, sect, 256 * half + 218);
+              exec += 256 * * Addr(track, sect, 256 * half + 219);
 
-            // RUN/GOTO line if BASIC file	
+              if (exec < 65535) // Valid start addresss
+              {
+                printf("       ");
+                printf("%7.0f ", (float) exec);
+              };
+            }
+
+            // RUN/GOTO line if SAM BASIC file	
             if ((stat & 63) == 16) {
               exec = * Addr(track, sect, 256 * half + 243);
               exec += 256 * * Addr(track, sect, 256 * half + 244);
 
               if (exec < 65535) // Valid start addresss
               {
-                printf("%7.0f ", (float) exec);
-              } else {
                 printf("        ");
+                printf("%7.0f ", (float) exec);
               };
 
               /* Debug bit for BASIC
@@ -1202,26 +1239,27 @@ void Directorymgt(void) {
               224-226		19-21 	If the file type is 16 then these bytes contain the program length plus numeric variables.
               227-229		22-24 	If the file type is 16 then these bytes contain the program lengtrh plus numeric variables
               					and the gap length before string and array variables. */
-              printf("\n");
             }
 
-            // Execute address if CODE file
+            // Execute address if ZX CODE file
+            if ((stat & 63) == 4) {
+              exec = * Addr(track, sect, 256 * half + 218);
+              exec += 256 * * Addr(track, sect, 256 * half + 219);
+
+              if (exec != 0) printf("%7.0f", (float) exec); // Print unless no exec addresss
+            }
+
+            // Execute address if SAM CODE file
             if ((stat & 63) == 19) {
-              exec = 16384 * (( * Addr(track, sect, 256 * half + 242) & 31));
-              exec += * Addr(track, sect, 256 * half + 243);
+              exec = * Addr(track, sect, 256 * half + 243);
               exec += 256 * * Addr(track, sect, 256 * half + 244);
+              exec += 16384 * (( * Addr(track, sect, 256 * half + 242) & 31));
               exec -= 32768; // take away offset
 
-              if (exec != 540671) // No exec addresss
-              {
-                printf("%7.0f\n", (float) exec);
-              } else {
-                printf("\n");
-              };
+              if (exec != 540671) printf("%7.0f", (float) exec); // Print unless no exec addresss
             }
 
-            // If not code or BASIC (i.e. no addresses/details to show) then carridge return
-            if ((((stat & 63) != 19) && (stat & 63) != 16)) printf("\n");
+            printf("\n");
 
             nfsect -= * Addr(track, sect, 256 * half + 12);
             nfsect -= 256 * * Addr(track, sect, 256 * half + 11);
