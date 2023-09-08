@@ -1,4 +1,4 @@
-// Sam Coupe MGT/DSK Manipulator 2.1.4
+// Sam Coupe MGT/DSK Manipulator 2.2.0
 //
 // Hacky command line remix by Dan Dooré 
 // 1.0.0 MacOS by Andrew Collier
@@ -6,7 +6,6 @@
 // Command line enhancement by Frode Tennebø for z88dk
 //
 // https://github.com/dandoore/mgtman/
-
 
 #include <stdio.h>
 
@@ -168,7 +167,7 @@ void Usage(char * exename) {
 
 void Help(char * exename) {
   printf("        ,\n");
-  printf("SAM Coupe .MGT/DSK image manipulator v2.1.4\n");
+  printf("SAM Coupe .MGT/DSK image manipulator v2.2.0\n");
   printf("-------------------------------------------\n");
   printf("                                         ,\n");
   printf("2021 Hacky command line remix by Dan Doore\n");
@@ -682,22 +681,27 @@ void SaveFile(char * filename, int type, int start, int exec, int mode) {
       // Set File Type in File and Dir
 
       * Addr(t, s, 0) = type; // Set type in 9 byte File Header
-      *(found) = type; // Set type in Diretory Entry
+      *(found) = type; // Set type in Directory Entry
 
       // Pad filename to 10 chars with spaces for writing to SAM directory
+
       i = 0;
       for (i = strlen(filename); i < 10; i++) {
         filename[i] = ' ';
       };
 
-      // Write filename to Diretory Entry
+      // Write filename to Directory Entry
+
       for (i = 0; i < 10; i++) {
         *(found + 1 + i) = filename[i];
       };
 
+      // Calculate Sectors used
+
       i = (filelength + 9) / 510;
       *(found + 11) = i / 256; //MSB sectors used
-      *(found + 12) = (i % 256)+1; //LSB sectors used
+      *(found + 12) = (i % 256) + 1; //LSB sectors used
+
       *(found + 13) = t; // Start Track
       *(found + 14) = s; // Start sector
       *(found + 220) = 0; // Flags blank
@@ -999,7 +1003,7 @@ void LoadFile(char * filename) {
 // Output directory to screen
 
 void Directorymgt(void) {
-  int maxdtrack, nfiles, nfsect, flen, type, exec, startpage, startoffset, start, mode, i, stat, track, sect, half;
+  int maxdtrack, nfiles, nfsect, flen, sectors, type, exec, startpage, startoffset, start, mode, i, stat, track, sect, half;
   char diskname[11], filename[11];
   char blankname[] = "*         ";
 
@@ -1054,8 +1058,8 @@ void Directorymgt(void) {
     printf("\n        *** UNI-DOS directory: %s ***        \n\n", diskname);
   }
 
-  printf("Filename   HP Type         Size   Address Execute\n");
-  printf("-------------------------------------------------\n");
+  printf("Filename   HP Type        Secs  Size     Address Execute\n");
+  printf("--------------------------------------------------------\n");
 
   nfiles = 0;
   nfsect = 10 * (160 - maxdtrack) + (maxdtrack > 4);
@@ -1112,14 +1116,23 @@ void Directorymgt(void) {
             if ((stat & 63) == 30) printf(" %s", "HDOS DISK  ");
             if ((stat & 63) == 31) printf(" %s", "HDOS FRETMP");
 
+            // Sector Count
+            if (((stat & 63) != 12) && ((stat & 63) != 21)) { // Ignore sector counts for filetypes DIR
+              sectors = * Addr(track, sect, 256 * half + 12);
+              sectors += 256 * * Addr(track, sect, 256 * half + 11);
+              printf("%5.0f ", (float) sectors);
+            } else {
+              printf("      ");
+            };
             // File size
-
-            flen = * Addr(track, sect, 256 * half + 240);
-            flen += 256 * * Addr(track, sect, 256 * half + 241);
-            flen += 16384 * * Addr(track, sect, 256 * half + 239);
-
-            printf("%7.0f ", (float) flen);
-
+            if ((format < 3) && ((stat & 63) != 5) && ((stat & 63) != 9)) { // Ignore filesize for ZX images and filetypes SNAP 48K/128K as data not in directory
+              flen = * Addr(track, sect, 256 * half + 240);
+              flen += 256 * * Addr(track, sect, 256 * half + 241);
+              flen += 16384 * * Addr(track, sect, 256 * half + 239);
+              printf("%7.0f ", (float) flen);
+            } else {
+              printf("        ");
+            };
             // MODE details if SCREEN$ file
             if ((stat & 63) == 20) {
               mode = ( * Addr(track, sect, 256 * half + 221)) + 1;
