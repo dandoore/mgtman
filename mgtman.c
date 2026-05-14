@@ -1019,7 +1019,7 @@ void Directorymgt(void) {
 
   maxdtrack = 4; // Default directory track size
 
-  // Format 0 = SamDOS, 1 = MasterDOS, 2 = BDOS, 3=GDOS(DISCiPLE)/G+DOS(PlusD), 4=UNI-DOS
+  // Format 0 = SamDOS, 1 = MasterDOS, 2 = BDOS, 10=GDOS(DISCiPLE)/G+DOS(PlusD), 11=UNI-DOS
 
   if (format == 0) {
     printf("\n             *** SAMDOS directory ***            \n\n");
